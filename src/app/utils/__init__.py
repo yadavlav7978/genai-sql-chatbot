@@ -12,6 +12,6 @@ __all__ = [
     "read_excel_file",
     "analyze_column",
     "infer_sql_type",
-    "get_schema_summary",
+    "get_schema_summary"
 ]
 
