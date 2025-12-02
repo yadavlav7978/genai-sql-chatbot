@@ -1201,3 +1201,47 @@ tbody tr:hover {
   display: flex;
   justify-content: flex-end !important;
 }
+
+.enhanced-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 28px;
+  background: linear-gradient(135deg, rgba(245, 247, 255, 0.75) 0%, rgba(224, 231, 255, 0.75) 100%);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.header-centered {
+  text-align: center;
+  flex: 1;
+  /* keeps it centered even with right button */
+}
+
+.header-centered h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6 0%, #764ba2 100%);
+
+  /* Gradient text compatibility */
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-centered p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
