@@ -407,16 +407,100 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   newConversation(): void {
+    // Clear session and messages
     this.sessionId = null;
     this.messages = [];
-    this.uploadedFileId = null;
-    this.uploadedFileName = null;
-    this.uploadedFileSchema = null;
     this.showSchema = false;
-    localStorage.removeItem('uploadedFileId');
-    localStorage.removeItem('uploadedFileName');
-    localStorage.removeItem('uploadedFileSchema');
-    this.addWelcomeMessage();
+
+    // Check if there's an existing file on the server
+    this.chatService.checkFileStatus().subscribe({
+      next: (response: FileStatusResponse) => {
+        if (response.has_file && response.file_id && response.filename) {
+          // File exists on server - preserve it
+          this.uploadedFileId = response.file_id;
+          this.uploadedFileName = response.filename;
+
+          // Update localStorage
+          localStorage.setItem('uploadedFileId', response.file_id);
+          localStorage.setItem('uploadedFileName', response.filename);
+
+          // Try to load schema from localStorage or fetch from server
+          const savedSchema = localStorage.getItem('uploadedFileSchema');
+          if (savedSchema) {
+            try {
+              this.uploadedFileSchema = JSON.parse(savedSchema);
+            } catch (e) {
+              console.error('Failed to parse saved schema', e);
+              this.loadSchemaFromServer();
+            }
+          } else {
+            this.loadSchemaFromServer();
+          }
+
+          // Show message that file is ready for new chat
+          this.messages.push({
+            role: 'assistant',
+            content: `🔄 New chat started! File "${response.filename}" is already loaded. You can start asking questions right away!`,
+            timestamp: new Date()
+          });
+        } else {
+          // No file exists - clear everything and prompt upload
+          this.uploadedFileId = null;
+          this.uploadedFileName = null;
+          this.uploadedFileSchema = null;
+          localStorage.removeItem('uploadedFileId');
+          localStorage.removeItem('uploadedFileName');
+          localStorage.removeItem('uploadedFileSchema');
+
+          this.messages.push({
+            role: 'assistant',
+            content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
+            timestamp: new Date()
+          });
+        }
+      },
+      error: (error) => {
+        // On error, check localStorage as fallback
+        const savedFileId = localStorage.getItem('uploadedFileId');
+        const savedFileName = localStorage.getItem('uploadedFileName');
+
+        if (savedFileId && savedFileName) {
+          // Use saved file info
+          this.uploadedFileId = savedFileId;
+          this.uploadedFileName = savedFileName;
+
+          // Try to load schema
+          const savedSchema = localStorage.getItem('uploadedFileSchema');
+          if (savedSchema) {
+            try {
+              this.uploadedFileSchema = JSON.parse(savedSchema);
+            } catch (e) {
+              console.error('Failed to parse saved schema', e);
+            }
+          }
+
+          this.messages.push({
+            role: 'assistant',
+            content: `🔄 New chat started! File "${savedFileName}" is available. You can start asking questions!`,
+            timestamp: new Date()
+          });
+        } else {
+          // No file available anywhere
+          this.uploadedFileId = null;
+          this.uploadedFileName = null;
+          this.uploadedFileSchema = null;
+          localStorage.removeItem('uploadedFileId');
+          localStorage.removeItem('uploadedFileName');
+          localStorage.removeItem('uploadedFileSchema');
+
+          this.messages.push({
+            role: 'assistant',
+            content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
+            timestamp: new Date()
+          });
+        }
+      }
+    });
   }
 
   toggleSchema(): void {
