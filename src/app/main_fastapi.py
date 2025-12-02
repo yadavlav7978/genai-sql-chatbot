@@ -18,19 +18,12 @@ logger = setup_logger("sql-chatbot")
 # Configure API key
 def configure_api_key():
     """Configure Google API key from environment variables."""
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-    if api_key:
-        os.environ["GOOGLE_API_KEY"] = api_key
-        os.environ["GEMINI_API_KEY"] = api_key
-        logger.info("Google API key loaded successfully")
-        return True
-    else:
-        logger.warning(
-            "GOOGLE_API_KEY or GEMINI_API_KEY not found. "
-            "Please set one of these in your .env file. "
-            "Chat functionality will not work without an API key."
-        )
-        return False
+    os.environ["AZURE_API_KEY"] = os.getenv("API_KEY")
+    os.environ["AZURE_API_BASE"] = os.getenv("API_ENDPOINT")
+    os.environ["AZURE_API_VERSION"] = os.getenv("API_VERSION")
+
+    return True
+
 
 # Initialize API key configuration
 configure_api_key()
