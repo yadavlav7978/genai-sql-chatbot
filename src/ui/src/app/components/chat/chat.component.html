@@ -164,7 +164,9 @@
 
     <!-- Messages Container -->
     <div class="messages-container" #chatContainer>
-      <div class="message-wrapper fade-in" *ngFor="let message of messages">
+      <div class="message-wrapper fade-in" *ngFor="let message of messages"
+        [ngClass]="{ 'user-wrapper': message.role === 'user' }">
+
         <!-- User Message -->
         <div class="message message-user" *ngIf="message.role === 'user'">
           <div class="message-content">
@@ -232,7 +234,7 @@
         <div class="message-content">
           <div class="loading-indicator">
             <div class="loading"></div>
-            <span>Thinking...</span>
+            <span>Processing Query...</span>
           </div>
         </div>
       </div>

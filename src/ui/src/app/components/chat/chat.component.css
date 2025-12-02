@@ -1195,3 +1195,9 @@ tbody tr:hover {
 .explanation-content {
   padding-bottom: 10px;
 }
+
+/* Align user messages properly to the right */
+.user-wrapper {
+  display: flex;
+  justify-content: flex-end !important;
+}
