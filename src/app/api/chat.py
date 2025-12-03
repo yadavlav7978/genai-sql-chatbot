@@ -90,6 +90,7 @@ async def chat(
 
         # =============================== SEND MESSAGE TO GENAI ===============================
         user_msg = types.UserContent(message)
+        selected_agent = None
 
         logger.info("Sending message to AI model...")
         response_text = ""
@@ -102,6 +103,10 @@ async def chat(
             if event.is_final_response():
                 if event.content and event.content.parts:
                     response_text = event.content.parts[0].text
+
+            if event.actions and event.actions.transfer_to_agent:
+                selected_agent = event.actions.transfer_to_agent
+                logger.info(f"Orchestrator agent selected: {selected_agent}")
 
         trimmed_resp = response_text[:200] + ("..." if len(response_text) > 200 else "")
         logger.info(f"AI response received: '{trimmed_resp}'")
@@ -117,6 +122,7 @@ async def chat(
             "query_result": parsed["query_result"],
             "sql_query": parsed["sql_query"],
             "error": parsed["error"],
+            "selected_agent": selected_agent,
             "session_id": session_id
         }
 

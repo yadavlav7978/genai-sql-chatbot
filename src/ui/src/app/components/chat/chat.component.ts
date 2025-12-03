@@ -12,6 +12,7 @@ interface Message {
   queryResult?: string;
   sql_query?: string;
   error?: string;
+  selectedAgent?: string;
 }
 
 @Component({
@@ -34,6 +35,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   uploadedFileSchema: any = null;
   showSidebar: boolean = true;
   showSchema: boolean = false;
+  lastSelectedAgent: string | null = null;
   conversations: Array<{ id: string; title: string; lastMessage: string }> = [];
 
   constructor(private chatService: ChatService, private sanitizer: DomSanitizer) { }
@@ -375,10 +377,17 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           queryResult: response.query_result,
           sql_query: response.sql_query,
           error: response.error,
+          selectedAgent: response.selected_agent,
           timestamp: new Date()
         };
 
         this.messages.push(message);
+
+        // Update last selected agent for sidebar display
+        if (response.selected_agent) {
+          this.lastSelectedAgent = response.selected_agent;
+        }
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -551,6 +560,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         console.error('Failed to load schema:', error);
       }
     });
+  }
+
+  getFormattedAgentName(): string {
+    if (!this.lastSelectedAgent) return 'No agent selected';
+
+    // Convert agent names to readable format
+    const agentNameMap: { [key: string]: string } = {
+      'greeting_agent': 'Greeting Agent',
+      'sql_agent': 'SQL Agent',
+      'inputValidationAndSqlGeneration_agent': 'Input Validation & SQL Generation',
+      'sqlValidatorAndSqlExecutor_agent': 'SQL Validator & Executor'
+    };
+
+    return agentNameMap[this.lastSelectedAgent] || this.lastSelectedAgent;
   }
 }
 

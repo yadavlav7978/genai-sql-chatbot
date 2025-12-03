@@ -1405,3 +1405,121 @@ tbody tr:hover {
 .message-text {
   font-weight: 500;
 }
+
+/* ===== SELECTED AGENT BADGE ===== */
+.selected-agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d97706;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.selected-agent-badge:hover {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.selected-agent-badge svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.selected-agent-badge span {
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+}
+
+/* ===== SIDEBAR AGENT STATUS SECTION ===== */
+.agent-status-section {
+  margin: 20px;
+  margin-top: 0%;
+  padding: 16px 18px;
+  background: #e4af72;
+  border: 1.5px solid rgba(245, 158, 11, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agent-status-section:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+  transform: translateY(-2px);
+}
+
+.agent-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+
+
+.agent-status-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: rgb(81, 80, 80);
+}
+
+.agent-status-title {
+  white-space: nowrap;
+}
+
+
+.agent-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(254, 243, 199, 0.9) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  box-shadow: inset 0 1px 3px rgba(245, 158, 11, 0.1);
+}
+
+.agent-pulse-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-agent 2s infinite;
+}
+
+@keyframes pulse-agent {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+  flex: 1;
+  text-align: left;
+}

@@ -17,12 +17,24 @@
       🔄 New Chat
     </button>
 
+    <!-- Active Agent Status Section -->
+    <div class="agent-status-section" *ngIf="lastSelectedAgent">
+      <div class="agent-status-header">
+        <span class="agent-status-title">Agent selected by orchestrator</span>
+      </div>
+      <div class="agent-status-badge">
+        <div class="agent-pulse-indicator"></div>
+        <span class="agent-name">{{ getFormattedAgentName() }}</span>
+      </div>
+    </div>
+
     <div class="conversations-list">
       <div class="conversation-item" *ngFor="let conv of conversations">
         <span class="conversation-title">{{ conv.title }}</span>
         <span class="conversation-preview">{{ conv.lastMessage }}</span>
       </div>
     </div>
+
 
     <div class="sidebar-footer" *ngIf="uploadedFileName">
       <div class="file-status-info">
