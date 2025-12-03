@@ -1,77 +1,65 @@
-"""Tool for executing SQL queries against uploaded Excel/CSV files."""
-import sqlite3
-import pandas as pd
-from pathlib import Path
+"""Tool for executing SQL queries on uploaded Excel/CSV files."""
+
+# =============================== IMPORTS ===============================
 import json
+import sqlite3
+from pathlib import Path
+
+import pandas as pd
 
 from src.app.configs.logger_config import get_logger
 from src.app.utils.excel_schema import read_excel_file
 
-logger = get_logger("execute_sql")
+# =============================== LOGGER ===============================
+logger = get_logger("Tool-Service-Execute-SQL")
 
 
+# =============================== MAIN FUNCTION ===============================
 def execute_sql(query: str) -> str:
     """
-    Execute a SQL query against Excel/CSV data.
-    
-    This function loads data from an Excel or CSV file into an in-memory SQLite database,
-    executes the provided SQL query, and returns the results as a JSON string.
-    
-    The function automatically finds the uploaded file in the uploads directory.
-    
-    Args:
-        query (str): The SQL query to execute (should be a SELECT statement)
-        
-    Returns:
-        str: JSON string containing the query results with the following structure:
-             {
-                 "success": bool,
-                 "data": List[Dict[str, Any]],  # List of rows as dictionaries
-                 "row_count": int,
-                 "columns": List[str],
-                 "error": str (only if success is False)
-             }
-             
-    Example:
-        >>> result = execute_sql("SELECT * FROM Sheet1 LIMIT 10")
-        >>> print(result)
-        {"success": true, "data": [...], "row_count": 10, "columns": ["col1", "col2"]}
+    Execute a SQL query on data from the uploaded Excel/CSV file.
+
+    This function:
+    - Finds the latest uploaded Excel/CSV file in the 'uploads' folder
+    - Loads the data into an in-memory SQLite database
+    - Runs the given SQL query
+    - Returns the result as a JSON string
     """
     try:
-        # Auto-detect the file from the uploads directory
-        file_path = None
+        # Find the latest uploaded Excel/CSV file
         upload_dir = Path("uploads")
+        file_path = None
+
         if upload_dir.exists():
             files = list(upload_dir.glob("*.*"))
-            # Filter for valid Excel/CSV files
-            valid_files = [f for f in files if f.suffix.lower() in ['.xlsx', '.xls', '.csv']]
-            
+            valid_files = [f for f in files if f.suffix.lower() in [".xlsx", ".xls", ".csv"]]
+
             if valid_files:
-                # Use the most recent file
-                file_path = str(max(valid_files, key=lambda f: f.stat().st_mtime))
-                logger.info(f"Auto-detected file: {file_path}")
+                latest_file = max(valid_files, key=lambda f: f.stat().st_mtime)
+                file_path = str(latest_file)
+                logger.info(f"Using uploaded file for SQL execution: {latest_file.name}")
             else:
-                error_msg = "No Excel/CSV file found in uploads directory"
+                error_msg = "No Excel or CSV file found in the uploads folder."
                 logger.error(error_msg)
                 return json.dumps({
                     "success": False,
                     "error": error_msg,
                     "data": [],
                     "row_count": 0,
-                    "columns": []
+                    "columns": [],
                 })
         else:
-            error_msg = "Uploads directory not found"
+            error_msg = "Uploads folder not found."
             logger.error(error_msg)
             return json.dumps({
                 "success": False,
                 "error": error_msg,
                 "data": [],
                 "row_count": 0,
-                "columns": []
+                "columns": [],
             })
-        
-        # Validate file exists
+
+        # Check that the file still exists
         file_path_obj = Path(file_path)
         if not file_path_obj.exists():
             error_msg = f"File not found: {file_path}"
@@ -81,88 +69,75 @@ def execute_sql(query: str) -> str:
                 "error": error_msg,
                 "data": [],
                 "row_count": 0,
-                "columns": []
+                "columns": [],
             })
-        
-        logger.info(f"Executing SQL query on file: {file_path}")
-        logger.debug(f"Query: {query}")
-        
-        # Read the Excel/CSV file
+
+        logger.info(f"Starting SQL execution on file: {file_path_obj.name}")
+        logger.debug(f"SQL query: {query}")
+
+        # Read data from Excel/CSV
         sheets_data = read_excel_file(file_path)
-        
-        # Create an in-memory SQLite database
+
+        # Create in-memory SQLite database
         conn = sqlite3.connect(":memory:")
-        
-        # Load each sheet/table into the database
+
+        # Load each sheet as a table
         for sheet_name, df in sheets_data.items():
-            # Clean column names (remove extra spaces, replace spaces with underscores)
-            df.columns = df.columns.str.strip().str.replace(' ', '_', regex=False)
-            
-            # Write DataFrame to SQLite
-            df.to_sql(sheet_name, conn, index=False, if_exists='replace')
-            logger.debug(f"Loaded table '{sheet_name}' with {len(df)} rows and {len(df.columns)} columns")
-        
-        # Execute the query
+            df.columns = df.columns.str.strip().str.replace(" ", "_", regex=False)
+            df.to_sql(sheet_name, conn, index=False, if_exists="replace")
+            logger.debug(
+                f"Loaded table '{sheet_name}' with {len(df)} rows and {len(df.columns)} columns"
+            )
+
+        # Run the query
         cursor = conn.cursor()
         cursor.execute(query)
-        
-        # Fetch results
+
         rows = cursor.fetchall()
-        columns = [description[0] for description in cursor.description] if cursor.description else []
-        
-        # Convert rows to list of dictionaries
+        columns = [desc[0] for desc in cursor.description] if cursor.description else []
+
+        # Build result rows as list of dicts
         data = []
         for row in rows:
             row_dict = {}
             for i, col_name in enumerate(columns):
                 value = row[i]
-                # Handle None/NULL values
-                if value is None:
-                    row_dict[col_name] = None
-                else:
-                    row_dict[col_name] = value
+                row_dict[col_name] = value if value is not None else None
             data.append(row_dict)
-        
-        # Close connection
+
         conn.close()
-        
+
         result = {
             "success": True,
             "data": data,
             "row_count": len(data),
-            "columns": columns
+            "columns": columns,
         }
-        
-        logger.info(f"Query executed successfully. Returned {len(data)} rows with {len(columns)} columns")
-        
+
+        logger.info(
+            f"SQL query executed successfully. Rows returned: {len(data)}, Columns: {len(columns)}"
+        )
+
         return json.dumps(result, indent=2)
-        
+
     except sqlite3.Error as e:
-        error_msg = f"SQL execution error: {str(e)}"
+        error_msg = f"SQL error while running query: {e}"
         logger.error(error_msg, exc_info=True)
         return json.dumps({
             "success": False,
             "error": error_msg,
             "data": [],
             "row_count": 0,
-            "columns": []
-        })
-        
-    except Exception as e:
-        error_msg = f"Unexpected error during SQL execution: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        return json.dumps({
-            "success": False,
-            "error": error_msg,
-            "data": [],
-            "row_count": 0,
-            "columns": []
+            "columns": [],
         })
 
-# Example usage for testing
-if __name__ == "__main__":
-    # Test the function - now auto-detects uploaded file
-    test_query = "SELECT * FROM Sheet1 LIMIT 5"
-    
-    result = execute_sql(test_query)
-    print(result)
+    except Exception as e:
+        error_msg = f"Unexpected error during SQL execution: {e}"
+        logger.error(error_msg, exc_info=True)
+        return json.dumps({
+            "success": False,
+            "error": error_msg,
+            "data": [],
+            "row_count": 0,
+            "columns": [],
+        })

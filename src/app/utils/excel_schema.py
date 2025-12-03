@@ -1,4 +1,18 @@
-"""Utility functions for reading Excel files and generating schema representations."""
+# =============================== FILE PURPOSE ===============================
+"""
+This file contains helper functions that:
+
+- Read Excel/CSV files
+- Analyze columns and detect data types
+- Build a schema for each sheet/table
+- Prepare a summary of rows, columns, and tables
+- Convert numpy types into Python types for safe JSON output
+
+This file does not handle API requests. It is used by the schema API and file manager.
+"""
+
+
+# =============================== IMPORTS ===============================
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -6,302 +20,200 @@ from typing import Dict, List, Any, Optional
 
 from src.app.configs.logger_config import get_logger
 
-logger = get_logger("excel_schema")
+# =============================== LOGGER ===============================
+logger = get_logger("Utils-Service-Excel-Schema")
 
 
+# =============================== NUMPY TYPE CONVERSION ===============================
 def convert_numpy_types(obj: Any) -> Any:
-    """
-    Recursively convert numpy types to Python native types for JSON serialization.
-    
-    Args:
-        obj: Object that may contain numpy types
-        
-    Returns:
-        Object with numpy types converted to Python native types
-    """
+    """Convert numpy types to normal Python types so they can be returned as JSON."""
     if isinstance(obj, np.integer):
         return int(obj)
-    elif isinstance(obj, np.floating):
+    if isinstance(obj, np.floating):
         return float(obj)
-    elif isinstance(obj, np.bool_):
+    if isinstance(obj, np.bool_):
         return bool(obj)
-    elif isinstance(obj, np.ndarray):
+    if isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {key: convert_numpy_types(value) for key, value in obj.items()}
-    elif isinstance(obj, (list, tuple)):
+    if isinstance(obj, (list, tuple)):
         return [convert_numpy_types(item) for item in obj]
-    elif pd.isna(obj):
+    if pd.isna(obj):
         return None
-    else:
-        return obj
+    return obj
 
 
+# =============================== SQL TYPE INFERENCE ===============================
 def infer_sql_type(pandas_dtype: str, series: pd.Series) -> str:
-    """
-    Infer SQL data type from pandas dtype and actual data.
-    
-    Args:
-        pandas_dtype: Pandas dtype string
-        series: Pandas Series to analyze
-        
-    Returns:
-        SQL type string
-    """
+    """Decide the SQL type based on pandas datatype and column values."""
     dtype_str = str(pandas_dtype).lower()
-    
-    # Integer types
-    if 'int' in dtype_str:
-        # Check if it's boolean-like (0/1)
+
+    if "int" in dtype_str:
         if series.nunique() == 2 and set(series.dropna().unique()).issubset({0, 1}):
-            return 'BOOLEAN'
-        return 'INTEGER'
-    
-    # Float types
-    if 'float' in dtype_str:
-        return 'REAL'
-    
-    # Boolean types
-    if 'bool' in dtype_str:
-        return 'BOOLEAN'
-    
-    # DateTime types
-    if 'datetime' in dtype_str or 'date' in dtype_str:
-        return 'DATETIME'
-    
-    # Time types
-    if 'time' in dtype_str:
-        return 'TIME'
-    
-    # String/Text types (default)
-    return 'TEXT'
+            return "BOOLEAN"
+        return "INTEGER"
+
+    if "float" in dtype_str:
+        return "REAL"
+
+    if "bool" in dtype_str:
+        return "BOOLEAN"
+
+    if "datetime" in dtype_str or "date" in dtype_str:
+        return "DATETIME"
+
+    if "time" in dtype_str:
+        return "TIME"
+
+    return "TEXT"
 
 
+# =============================== COLUMN ANALYSIS ===============================
 def analyze_column(series: pd.Series, column_name: str) -> Dict[str, Any]:
-    """
-    Analyze a single column and return its metadata.
-    
-    Args:
-        series: Pandas Series representing the column
-        column_name: Name of the column
-        
-    Returns:
-        Dictionary with column metadata
-    """
-    # Infer SQL type
+    """Analyze one column and return key information about it."""
     sql_type = infer_sql_type(str(series.dtype), series)
-    
-    # Calculate statistics - optimized operations
+
     total_count = len(series)
-    null_count = int(series.isna().sum())  # Convert to int immediately
-    null_percentage = (null_count / total_count * 100) if total_count > 0 else 0.0
-    
-    # Get unique values count - use faster method
+    null_count = int(series.isna().sum())
+    null_percentage = (null_count / total_count * 100) if total_count > 0 else 0
     unique_count = int(series.nunique())
-    
-    # Get sample values (non-null) - limit to 3 for performance
-    # Use iloc for faster access instead of head()
+
+    # Collect up to 3 sample values
     sample_values = []
     non_null_series = series.dropna()
     if len(non_null_series) > 0:
-        # Take first 3 non-null values for performance
-        sample_count = min(3, len(non_null_series))
-        sample_values = non_null_series.iloc[:sample_count].tolist()
-    
-    # Check if column could be a primary key (all unique, no nulls)
-    # Use faster comparison
-    is_potential_pk = (unique_count == total_count and null_count == 0 and total_count > 0)
-    
-    # Convert numpy types to Python native types for JSON serialization
-    nullable = bool(null_count > 0)
-    is_pk = bool(is_potential_pk)
-    
-    # Convert sample values to strings, handling numpy types - optimized
-    sample_vals = []
+        sample_values = non_null_series.iloc[:min(3, len(non_null_series))].tolist()
+
+    is_potential_pk = (
+        unique_count == total_count and null_count == 0 and total_count > 0
+    )
+
+    # Clean sample values
+    cleaned_samples = []
     for val in sample_values:
         if pd.isna(val):
             continue
-        # Convert numpy types to Python native types
         try:
-            if hasattr(val, 'item'):  # numpy scalar
+            if hasattr(val, "item"):
                 val = val.item()
-            sample_vals.append(str(val))
-        except (ValueError, TypeError):
-            # Skip problematic values
+            cleaned_samples.append(str(val))
+        except Exception:
             continue
-    
+
     return {
         "name": str(column_name),
         "type": sql_type,
-        "nullable": nullable,
-        "null_count": int(null_count),
-        "null_percentage": float(round(null_percentage, 2)),
-        "unique_count": int(unique_count),
-        "total_count": int(total_count),
-        "sample_values": sample_vals,
-        "is_potential_primary_key": is_pk
+        "nullable": null_count > 0,
+        "null_count": null_count,
+        "null_percentage": round(null_percentage, 2),
+        "unique_count": unique_count,
+        "total_count": total_count,
+        "sample_values": cleaned_samples,
+        "is_potential_primary_key": is_potential_pk,
     }
 
 
+# =============================== FILE READER ===============================
 def read_excel_file(file_path: str) -> Dict[str, pd.DataFrame]:
-    """
-    Read Excel file and return dictionary of sheet names to DataFrames.
-    Optimized for performance with large files.
-    
-    Args:
-        file_path: Path to the Excel file
-        
-    Returns:
-        Dictionary mapping sheet names to DataFrames
-    """
-    file_path_obj = Path(file_path)
-    file_ext = file_path_obj.suffix.lower()
-    
-    if file_ext == '.csv':
-        # Read CSV file with optimized settings
-        # Use low_memory=False for better type inference, but nrows for very large files
-        df = pd.read_csv(file_path, low_memory=False, nrows=None)
-        return {"Sheet1": df}  # CSV files have no sheets, use default name
-    elif file_ext in ['.xlsx', '.xls']:
-        # Read Excel file (all sheets) with optimized engine
-        engine = 'openpyxl' if file_ext == '.xlsx' else 'xlrd'
-        excel_data = pd.read_excel(file_path, sheet_name=None, engine=engine)
-        return excel_data
-    else:
-        raise ValueError(f"Unsupported file type: {file_ext}")
+    """Read a CSV or Excel file and return all sheets as DataFrames."""
+    file_ext = Path(file_path).suffix.lower()
+
+    if file_ext == ".csv":
+        logger.info(f"Reading CSV file: {file_path}")
+        df = pd.read_csv(file_path, low_memory=False)
+        return {"Sheet1": df}
+
+    if file_ext in [".xlsx", ".xls"]:
+        logger.info(f"Reading Excel file: {file_path}")
+        engine = "openpyxl" if file_ext == ".xlsx" else "xlrd"
+        return pd.read_excel(file_path, sheet_name=None, engine=engine)
+
+    raise ValueError(f"Unsupported file type: {file_ext}")
 
 
+# =============================== SCHEMA GENERATION ===============================
 def generate_schema(file_path: str) -> Dict[str, Any]:
-    """
-    Read an Excel/CSV file and generate a comprehensive schema representation.
-    
-    Args:
-        file_path: Path to the Excel/CSV file
-        
-    Returns:
-        Dictionary containing schema information with the following structure:
-        {
-            "file_path": str,
-            "file_name": str,
-            "file_type": str,
-            "tables": [
-                {
-                    "name": str,
-                    "row_count": int,
-                    "column_count": int,
-                    "columns": [
-                        {
-                            "name": str,
-                            "type": str,
-                            "nullable": bool,
-                            "null_count": int,
-                            "null_percentage": float,
-                            "unique_count": int,
-                            "total_count": int,
-                            "sample_values": List[str],
-                            "is_potential_primary_key": bool
-                        }
-                    ]
-                }
-            ],
-            "summary": {
-                "total_tables": int,
-                "total_rows": int,
-                "total_columns": int
-            }
-        }
-    """
+    """Generate a complete schema for a given Excel/CSV file."""
     try:
         file_path_obj = Path(file_path)
         file_name = file_path_obj.name
-        file_ext = file_path_obj.suffix.lower()
-        
-        # Read the file
+
+        logger.info(f"Starting schema generation for file: {file_name}")
+
         sheets_data = read_excel_file(file_path)
-        
+
         tables = []
         total_rows = 0
         total_columns = 0
-        
-        # Process each sheet/table
+
         for sheet_name, df in sheets_data.items():
-            # Clean column names (remove extra spaces, replace spaces with underscores)
-            # Use vectorized operations for better performance
-            df.columns = df.columns.str.strip().str.replace(' ', '_', regex=False)
-            
+            df.columns = df.columns.str.strip().str.replace(" ", "_", regex=False)
+
             columns = []
-            # Process columns in batch for better performance
             for col_name in df.columns:
-                column_info = analyze_column(df[col_name], col_name)
-                columns.append(column_info)
-            
-            table_info = {
+                columns.append(analyze_column(df[col_name], col_name))
+
+            tables.append({
                 "name": sheet_name,
                 "row_count": int(len(df)),
                 "column_count": int(len(df.columns)),
-                "columns": columns
-            }
-            
-            tables.append(table_info)
+                "columns": columns,
+            })
+
             total_rows += len(df)
             total_columns += len(df.columns)
-        
+
         schema = {
             "file_path": str(file_path),
             "file_name": file_name,
-            "file_type": file_ext,
+            "file_type": file_path_obj.suffix.lower(),
             "tables": tables,
             "summary": {
-                "total_tables": int(len(tables)),
-                "total_rows": int(total_rows),
-                "total_columns": int(total_columns)
-            }
+                "total_tables": len(tables),
+                "total_rows": total_rows,
+                "total_columns": total_columns,
+            },
         }
-        
-        # Convert all numpy types to Python native types for JSON serialization
+
         schema = convert_numpy_types(schema)
-        
+
         logger.info(
-            f"Schema generated successfully for {file_name}: "
-            f"{len(tables)} table(s), {total_rows:,} row(s), {total_columns} column(s)"
+            f"Schema created for {file_name}. "
+            f"Tables: {len(tables)}, Rows: {total_rows}, Columns: {total_columns}"
         )
+
         return schema
-        
+
     except Exception as e:
-        logger.error(f"Error generating schema for {file_path}: {str(e)}", exc_info=True)
-        raise ValueError(f"Failed to generate schema: {str(e)}")
+        logger.error(f"Failed to generate schema for {file_path}: {e}", exc_info=True)
+        raise ValueError(f"Failed to generate schema: {e}")
 
 
+# =============================== SCHEMA SUMMARY ===============================
 def get_schema_summary(schema: Dict[str, Any]) -> str:
-    """
-    Generate a human-readable summary of the schema.
-    
-    Args:
-        schema: Schema dictionary from generate_schema()
-        
-    Returns:
-        Formatted string summary
-    """
+    """Create a simple, readable summary for a schema."""
     summary = schema.get("summary", {})
     tables = schema.get("tables", [])
-    
+
     lines = [
         f"File: {schema.get('file_name', 'Unknown')}",
         f"Type: {schema.get('file_type', 'Unknown')}",
         f"Tables: {summary.get('total_tables', 0)}",
-        f"Total Rows: {summary.get('total_rows', 0):,}",
+        f"Total Rows: {summary.get('total_rows', 0)}",
         f"Total Columns: {summary.get('total_columns', 0)}",
-        ""
+        "",
     ]
-    
+
     for table in tables:
         lines.append(f"Table: {table['name']}")
-        lines.append(f"  Rows: {table['row_count']:,}, Columns: {table['column_count']}")
-        for col in table['columns']:
-            pk_marker = " [PK]" if col.get('is_potential_primary_key') else ""
-            null_info = f" ({col['null_count']} nulls)" if col['null_count'] > 0 else ""
-            lines.append(f"  - {col['name']}: {col['type']}{pk_marker}{null_info}")
-        lines.append("")
-    
-    return "\n".join(lines)
+        lines.append(f"  Rows: {table['row_count']}, Columns: {table['column_count']}")
 
+        for col in table["columns"]:
+            pk = " [PK]" if col.get("is_potential_primary_key") else ""
+            nulls = f" ({col['null_count']} nulls)" if col["null_count"] > 0 else ""
+            lines.append(f"  - {col['name']}: {col['type']}{pk}{nulls}")
+
+        lines.append("")
+
+    return "\n".join(lines)
