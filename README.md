@@ -101,42 +101,28 @@ The SQL ChatBot uses a **multi-agent architecture** powered by Google ADK. The s
 The chatbot uses **5 specialized AI agents**, each with a specific responsibility:
 
 ### 1️⃣ **Orchestrator Agent** (Entry Point)
-- **Role:** Main traffic controller
-- **Responsibility:** Analyzes incoming user messages and routes them to the appropriate agent
-- **Routing Logic:**
-  - Greetings/Help queries → `greeting_agent`
-  - Data queries → `sql_agent`
-- **Type:** LlmAgent (intelligent routing)
+- **Responsibility:** This is the main entry point agent that routes user queries to the appropriate sub-agent.
+It analyzes the user's intent and transfers to either the greeting agent or SQL agent.
 
 ---
 
 ### 2️⃣ **Greeting Agent**
-- **Role:** Welcome and onboarding
-- **Responsibility:** Greets users and explains chatbot capabilities
-- **Behavior:**
-  - Responds to "hello", "hi", "what can you do?"
-  - Provides friendly introduction
-  - Does NOT process SQL queries
-- **Type:** Agent (no sub-agents)
-- **Restrictions:** Cannot transfer to other agents (isolated)
+- **Responsibility:** This agent welcomes the user and provides an introduction to the SQL Chatbot system.It explains what the chatbot can do and how the user should proceed.
 
 ---
 
 ### 3️⃣ **SQL Agent** (Sequential Coordinator)
-- **Role:** Orchestrates SQL query processing
-- **Responsibility:** Manages a sequential pipeline of two sub-agents
-- **Pipeline:**
-  1. Input Validation & SQL Generation Agent
-  2. SQL Validator & SQL Executor Agent
-- **Type:** SequentialAgent (enforces execution order)
+- **Responsibility:** SQL Agent handles SQL query sequentially through 2 subagents.
+- **2 steps pipeline:**
+  1. Input Validation & SQL Generation Agent : - Validate user input + Generate SQL
+  2. SQL Validator & SQL Executor Agent : - Validate SQL + Execute SQL
 
 ---
 
 ### 4️⃣ **Input Validation & SQL Generation Agent**
-- **Role:** Query validation and SQL creation
 - **Responsibilities:**
-  1. Retrieves database schema using `get_schema()` tool
-  2. Validates user input for safety
+  1. This agent validates the user's input and generates a safe SQL query.
+  2. Validates user input for safety (only read query allowed, No write operation allowed)
   3. Checks if requested columns/tables exist
   4. Generates valid SQL query
 - **Tools:** `get_schema`
@@ -149,12 +135,10 @@ The chatbot uses **5 specialized AI agents**, each with a specific responsibilit
 ---
 
 ### 5️⃣ **SQL Validator & SQL Executor Agent**
-- **Role:** Final validation and execution
 - **Responsibilities:**
-  1. Validates SQL is SELECT-only (no destructive operations)
+  1. This agent validates SQL, executes it, and returns a user-friendly response.
   2. Cross-checks against schema using `get_schema()`
   3. Executes SQL using `execute_sql()` tool
-  4. Formats results as Markdown table
 - **Tools:** `execute_sql`, `get_schema`
 - **Input:** Reads SQL from `state['generated_sql']`
 - **Output:** Stores results in `state['query_result']`
@@ -199,73 +183,6 @@ Step 2: Orchestrator Agent receives message
 Step 4: Results returned to user ✓
 ```
 
-### **Key Communication Mechanisms:**
-
-1. **State Sharing** - Agents pass data via `state` dictionary:
-   - `state['generated_sql']` - SQL query from Agent 4
-   - `state['query_result']` - Results from Agent 5
-
-2. **Sequential Execution** - SQL Agent uses SequentialAgent to ensure:
-   - Agent 4 completes BEFORE Agent 5 starts
-   - No parallel execution in SQL pipeline
-
-3. **Agent Transfers** - Orchestrator can transfer control to:
-   - `greeting_agent` (isolated, no peer transfers)
-   - `sql_agent` (coordinates sub-agents)
-
-4. **Tool Calls** - Agents interact with data via tools:
-   - `get_schema()` - Fetches database structure
-   - `execute_sql(query)` - Runs SQL on data
-
----
-
-## 🛠️ Implementation Details
-
-### **Backend (FastAPI + Google ADK)**
-
-#### **1. Main Entry Point** - `src/app/main_fastapi.py`
-- FastAPI application server
-- Routes: `/api/chat`, `/api/upload-file`, `/api/health`
-- CORS enabled for Angular frontend
-- Handles file uploads (Excel/CSV)
-
-#### **2. Chat API** - `src/app/api/chat.py`
-- Receives user messages
-- Manages session state
-- Sends messages to Orchestrator Agent
-- Parses responses and returns to frontend
-
-#### **3. Agents** - `src/app/agents/`
-Each agent has:
-- `agent.py` - Agent configuration
-- `prompt.py` - Instructions and behavior rules
-
-#### **4. Tools** - `src/app/tools/`
-
-**`get_schema.py`:**
-```python
-# Returns database schema (tables, columns, types)
-# Used by agents to validate queries
-get_schema() -> JSON schema
-```
-
-**`execute_sql.py`:**
-```python
-# Executes SQL on uploaded Excel/CSV
-# Loads data into SQLite in-memory database
-# Returns query results as JSON
-execute_sql(query: str) -> JSON results
-```
-
-#### **5. Services** - `src/app/services/`
-- `session_service` - Manages conversation state
-- `runner` - Executes agent workflows
-
-#### **6. Response Parsing** - `src/app/utils/response_parser.py`
-- Extracts explanation, SQL, results, errors from agent output
-- Uses delimiters: `<<<EXPLANATION>>>`, `<<<SQL>>>`, `<<<QUERY_RESULT>>>`, `<<<END>>>`
-
----
 
 ### **Frontend (Angular)**
 
@@ -385,6 +302,7 @@ Use natural language to query your data:
 - **FastAPI** - Modern Python web framework
 - **Google ADK** - Agent Development Kit for multi-agent AI
 - **Google Gemini** - LLM for natural language understanding
+- **Azure OpenAI** - LLM for natural language understanding
 - **SQLite** - In-memory database for query execution
 - **Pandas** - Excel/CSV file processing
 
@@ -430,18 +348,4 @@ genai-sql-chatbot/
 └── README.md
 ```
 
----
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-**Built with ❤️ using Google ADK and FastAPI**
