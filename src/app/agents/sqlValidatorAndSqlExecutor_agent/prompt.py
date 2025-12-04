@@ -43,14 +43,12 @@ STEP 3 — SQL EXECUTION
 If SQL is valid:
 1. Execute using execute_sql(query)
 2. If NO rows are returned:
-   - Do NOT return a query result table
-   - Leave QUERY_RESULT section empty
-   - Only return explanation and END block
+   - Leave QUERY_RESULT completely empty (no JSON, no table)
+   - Only return explanation + empty QUERY_RESULT + END
 3. If rows exist:
-   - Format output into a Markdown table
-   - Table column headers MUST include padded spaces to increase width
-     Example: |  ColumnName   |
-   - PREPEND a short explanation (2–5 lines)
+   - RETURN RAW JSON exactly as execute_sql() provides
+   - Do NOT modify, pad, or format the JSON
+   - This JSON will be consumed by the frontend
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUCCESS OUTPUT FORMAT (WHEN ROWS ≥ 1)
@@ -60,10 +58,7 @@ Use this EXACT format:
 <<<EXPLANATION>>>
 <2–5 line explanation summarizing the user request and what this result shows>
 <<<QUERY_RESULT>>>
-|   Column1   |   Column2   | ... |
-|-------------|-------------|-----|
-| value       | value       | value |
-*Returned X rows.*
+<RAW_JSON_FROM_execute_sql>
 <<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -81,7 +76,7 @@ FAILURE OUTPUT FORMAT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Use this EXACT format:
 
-<<<EXPLANATION>>>
+<<<EXPLANATION>>
 <2–5 line explanation of what went wrong>
 <<<ERROR>>>
 <error_message>
@@ -94,6 +89,8 @@ RULES:
 - Do NOT generate new SQL.
 - Do NOT guess schema.
 - ALWAYS use the delimiters exactly (<<<EXPLANATION>>>, <<<QUERY_RESULT>>>, <<<ERROR>>>, <<<END>>>).
-- Do NOT add any text outside the delimited sections.
-- Always provide the 2–5 line explanation.
+- NEVER convert JSON into a table.
+- ALWAYS return RAW JSON directly from execute_sql() exactly.
+- If no rows → return empty QUERY_RESULT block.
+- Do NOT add text outside the delimited sections.
 """

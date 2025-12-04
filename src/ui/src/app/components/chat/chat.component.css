@@ -41,7 +41,7 @@
 
 .sidebar-header {
   padding: 24px;
-  height: 80px;
+  height: 60px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
@@ -313,7 +313,8 @@
 }
 
 .chat-header {
-  padding: 20px 28px;
+  padding: 10px 20px;
+  height: 60px;
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
   display: flex;
   align-items: center;
@@ -589,7 +590,7 @@
   border: 2px solid rgba(102, 126, 234, 0.1);
   border-radius: 12px;
   overflow: hidden;
-  max-height: 400px;
+  max-height: 250px;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -601,27 +602,32 @@ table {
 }
 
 thead {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: #ffffff;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 th {
-  padding: 14px 16px;
+  padding: 10px 16px;
   text-align: left;
   font-weight: 700;
   color: #667eea;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.5px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
 }
 
 td {
-  padding: 12px 16px;
+  padding: 2px 12px;
   border-bottom: 1px solid #f0f0f0;
   color: #2c3e50;
+  background: white;
+  line-height: 0;
+  font-size: 12px;
 }
 
 tbody tr {
@@ -668,7 +674,7 @@ tbody tr:hover {
 
 /* ===== INPUT AREA ===== */
 .input-area {
-  padding: 20px 28px;
+  height: 60px;
   border-top: 1px solid rgba(102, 126, 234, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   backdrop-filter: blur(20px);
@@ -680,9 +686,13 @@ tbody tr:hover {
   align-items: center;
   gap: 14px;
   background: white;
+  padding-left: 15px;
+  margin-top: 8px;
+  margin-left: 20px;
+  margin-right: 20px;
   border: 2px solid rgba(102, 126, 234, 0.15);
-  border-radius: 28px;
-  padding: 8px 20px;
+  border-radius: 10px;
+  border-color: #667eea;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
 }
@@ -732,10 +742,12 @@ tbody tr:hover {
 }
 
 .send-btn {
-  padding: 10px 20px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 8px;
   min-width: auto;
+  margin-right: 2px;
   font-weight: 700;
+  font-size: 13px;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
@@ -748,13 +760,18 @@ tbody tr:hover {
 
 /* ===== SCHEMA PANEL ===== */
 .schema-panel {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
   border-top: 1px solid rgba(102, 126, 234, 0.1);
-  background: linear-gradient(180deg, rgba(248, 249, 250, 0.9) 0%, rgba(255, 255, 255, 0.9) 100%);
+  background: #ffffff;
   backdrop-filter: blur(20px);
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  z-index: 50;
 }
 
 .schema-panel.expanded {
@@ -1129,7 +1146,6 @@ tbody tr:hover {
   align-items: center;
   gap: 10px;
   font-weight: 700;
-  margin-bottom: 14px;
   color: #1f2937;
   font-size: 13px;
   text-transform: uppercase;
@@ -1166,7 +1182,7 @@ tbody tr:hover {
 
 /* Enhanced Table Styling in Query Results */
 .query-result-section .table-container {
-  margin-top: 12px;
+  margin-top: 0px;
   overflow-x: auto;
   border-radius: 10px;
   background: white;
@@ -1309,13 +1325,17 @@ tbody tr:hover {
 .header-centered {
   text-align: center;
   flex: 1;
-  height: 45px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   /* keeps it centered even with right button */
 }
 
 .header-centered h1 {
   margin: 0;
-  font-size: 20px;
+  padding: 0;
+  font-size: 18px;
   font-weight: 600;
   background: linear-gradient(135deg, #3b82f6 0%, #764ba2 100%);
 
@@ -1324,13 +1344,16 @@ tbody tr:hover {
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  line-height: 1.2;
 }
 
 .header-centered p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #4b5563;
-  font-weight: 650;
+  margin: 2px 0 0;
+  padding: 0;
+  font-size: 12px;
+  color: rgb(28, 27, 27);
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .header-actions {
@@ -1592,4 +1615,35 @@ tbody tr:hover {
 .session-id:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(236, 253, 245, 1) 100%);
   transform: scale(1.02);
+}
+
+/* Results Table Wrapper and Row Count Display */
+.results-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row-count-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.row-count-display svg {
+  flex-shrink: 0;
+  color: #667eea;
+}
+
+.row-count-display strong {
+  color: #667eea;
+  margin-right: 6px;
 }
