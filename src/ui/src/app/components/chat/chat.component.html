@@ -153,23 +153,6 @@
             <span>Loading schema...</span>
           </div>
         </div>
-
-        <!-- Schema Summary -->
-        <div class="schema-summary" *ngIf="uploadedFileSchema && getSchemaSummary()">
-          <div class="summary-item">
-            <span class="summary-label">Total Tables:</span>
-            <span class="summary-value">{{ getSchemaSummary().total_tables || 0 }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Total Rows:</span>
-            <span class="summary-value">{{ (getSchemaSummary().total_rows || 0) | number }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Total Columns:</span>
-            <span class="summary-value">{{ getSchemaSummary().total_columns || 0 }}</span>
-          </div>
-        </div>
-
         <!-- Tables -->
         <div class="schema-tables" *ngIf="uploadedFileSchema">
           <div class="table-schema" *ngFor="let table of getSchemaTables(); let i = index">

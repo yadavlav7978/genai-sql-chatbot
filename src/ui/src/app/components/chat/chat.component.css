@@ -775,18 +775,18 @@ tbody tr:hover {
 }
 
 .schema-panel.expanded {
-  max-height: 65vh;
+  max-height: 80vh;
   overflow-y: auto;
-  min-height: 350px;
+  min-height: 80vh;
   box-shadow: inset 0 4px 20px rgba(102, 126, 234, 0.05);
 }
 
 .schema-panel-header {
-  padding: 20px 28px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(102, 126, 234, 0.05) 100%);
   backdrop-filter: blur(20px);
   border-bottom: 2px solid rgba(102, 126, 234, 0.15);
   display: flex;
+  padding: 12px 20px;
   justify-content: space-between;
   align-items: center;
   position: sticky;
@@ -819,33 +819,34 @@ tbody tr:hover {
 
 .schema-summary {
   display: flex;
-  gap: 24px;
-  padding: 20px;
+  gap: 30px;
+  padding: 12px 20px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(102, 126, 234, 0.05) 100%);
   backdrop-filter: blur(10px);
-  border-radius: 16px;
-  margin-bottom: 24px;
+  border-radius: 12px;
+  margin-bottom: 20px;
   border: 2px solid rgba(102, 126, 234, 0.15);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
 }
 
 .summary-item {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .summary-label {
-  font-size: 12px;
-  color: #7f8c8d;
-  font-weight: 600;
+  font-size: 11px;
+  color: rgb(49, 48, 48);
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .summary-value {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 800;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
@@ -869,7 +870,7 @@ tbody tr:hover {
 }
 
 .table-header {
-  padding: 20px 24px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
   border-bottom: 2px solid rgba(102, 126, 234, 0.15);
   display: flex;
@@ -903,15 +904,14 @@ tbody tr:hover {
 }
 
 .columns-list {
-  padding: 16px;
+  padding: 6px;
 }
 
 .column-item {
-  padding: 16px;
+  padding: 6px 6px;
   border-bottom: 1px solid #f0f0f0;
   transition: all 0.3s ease;
-  border-radius: 8px;
-  margin-bottom: 4px;
+  border-radius: 6px;
 }
 
 .column-item:last-child {
@@ -926,8 +926,6 @@ tbody tr:hover {
 .column-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 8px;
 }
 
 .column-name {
@@ -965,6 +963,7 @@ tbody tr:hover {
 .badge-pk {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   color: #e65100;
+  margin-left: 8px;
   border: 1px solid rgba(230, 81, 0, 0.2);
 }
 
