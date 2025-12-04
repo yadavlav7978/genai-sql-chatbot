@@ -276,6 +276,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    // Delete existing session before uploading new file
+    if (this.sessionId) {
+      this.chatService.deleteSession(this.sessionId).subscribe({
+        next: () => {
+          console.log('Session deleted before new file upload');
+          this.sessionId = null;
+        },
+        error: (error) => {
+          console.error('Failed to delete session:', error);
+          // Continue with upload even if session deletion fails
+        }
+      });
+    }
+
     this.isLoading = true;
     this.chatService.uploadFile(file).subscribe({
       next: (response: UploadResponse) => {
@@ -317,6 +331,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     if (!confirm(`Are you sure you want to delete "${this.uploadedFileName}"? You'll need to upload a new file to continue chatting.`)) {
       return;
+    }
+
+    // Delete session before deleting file
+    if (this.sessionId) {
+      this.chatService.deleteSession(this.sessionId).subscribe({
+        next: () => {
+          console.log('Session deleted before file deletion');
+          this.sessionId = null;
+        },
+        error: (error) => {
+          console.error('Failed to delete session:', error);
+          // Continue with file deletion even if session deletion fails
+        }
+      });
     }
 
     this.isLoading = true;
@@ -416,6 +444,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   newConversation(): void {
+    // Delete existing session before clearing
+    const oldSessionId = this.sessionId;
+    if (oldSessionId) {
+      this.chatService.deleteSession(oldSessionId).subscribe({
+        next: () => {
+          console.log('Session deleted for new conversation');
+        },
+        error: (error) => {
+          console.error('Failed to delete session:', error);
+        }
+      });
+    }
+
     // Clear session and messages
     this.sessionId = null;
     this.messages = [];

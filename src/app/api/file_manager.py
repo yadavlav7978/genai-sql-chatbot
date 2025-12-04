@@ -18,12 +18,15 @@ router = APIRouter(prefix="/api", tags=["file-manager"])
 # =============================== DIRECTORIES ===============================
 UPLOAD_DIR = Path("uploads")
 SCHEMA_DIR = Path("schemas")
+METADATA_DIR = Path("metadata")
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 SCHEMA_DIR.mkdir(exist_ok=True)
+METADATA_DIR.mkdir(exist_ok=True)
 
 logger.info(f"Upload folder is ready at this path: {UPLOAD_DIR.resolve()}")
 logger.info(f"Schema folder is ready at this path: {SCHEMA_DIR.resolve()}")
+logger.info(f"Metadata folder is ready at this path: {METADATA_DIR.resolve()}")
 
 # =============================== GLOBAL STATE ===============================
 CURRENT_FILE_ID: Optional[str] = None
@@ -55,7 +58,21 @@ def check_file_on_startup():
             logger.info(f"Removed old file: {f.name}")
 
     CURRENT_FILE_ID = latest_file.stem
-    CURRENT_FILENAME = latest_file.name
+    
+    # Load original filename from metadata
+    metadata_file = METADATA_DIR / f"{CURRENT_FILE_ID}.json"
+    if metadata_file.exists():
+        try:
+            with open(metadata_file, "r", encoding="utf-8") as f:
+                metadata = json.load(f)
+                CURRENT_FILENAME = metadata.get("original_filename", latest_file.name)
+            logger.info(f"Loaded original filename from metadata: {CURRENT_FILENAME}")
+        except Exception as e:
+            logger.warning(f"Failed to load metadata: {e}, using disk filename")
+            CURRENT_FILENAME = latest_file.name
+    else:
+        logger.warning(f"No metadata file found for {CURRENT_FILE_ID}, using disk filename")
+        CURRENT_FILENAME = latest_file.name
 
     # Load existing schema if present
     schema_file = SCHEMA_DIR / f"{CURRENT_FILE_ID}.json"
@@ -94,9 +111,10 @@ async def upload_file(file: UploadFile = File(...)):
         # Remove old files and schemas
         old_files = list(UPLOAD_DIR.glob("*.*"))
         old_schemas = list(SCHEMA_DIR.glob("*.json"))
+        old_metadata = list(METADATA_DIR.glob("*.json"))
 
-        if old_files or old_schemas:
-            logger.info(f"Removing {len(old_files)} old file(s) and {len(old_schemas)} existing schema(s).")
+        if old_files or old_schemas or old_metadata:
+            logger.info(f"Removing {len(old_files)} old file(s), {len(old_schemas)} schema(s), and {len(old_metadata)} metadata file(s).")
 
         for f in old_files:
             f.unlink()
@@ -105,6 +123,10 @@ async def upload_file(file: UploadFile = File(...)):
         for s in old_schemas:
             s.unlink()
             logger.info(f"Removed old schema: {s.name}")
+
+        for m in old_metadata:
+            m.unlink()
+            logger.info(f"Removed old metadata: {m.name}")
 
         # Save new file
         file_id = str(uuid.uuid4())
@@ -129,6 +151,18 @@ async def upload_file(file: UploadFile = File(...)):
             json.dump(schema, f, indent=2)
 
         logger.info("Schema created and stored successfully.")
+
+        # Save metadata with original filename
+        metadata = {
+            "original_filename": file.filename,
+            "file_id": file_id,
+            "uploaded_at": str(Path(file_path).stat().st_mtime)
+        }
+        metadata_file = METADATA_DIR / f"{file_id}.json"
+        with open(metadata_file, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+
+        logger.info(f"Metadata saved for file: {file.filename}")
 
         # Update global state
         CURRENT_FILE_ID = file_id
@@ -204,6 +238,12 @@ async def delete_file():
         if schema_file.exists():
             schema_file.unlink()
             logger.info(f"Deleted schema: {schema_file.name}")
+
+        # Delete metadata
+        metadata_file = METADATA_DIR / f"{deleted_id}.json"
+        if metadata_file.exists():
+            metadata_file.unlink()
+            logger.info(f"Deleted metadata: {metadata_file.name}")
 
         # Reset global state
         CURRENT_FILE_ID = None

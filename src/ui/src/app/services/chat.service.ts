@@ -72,5 +72,9 @@ export class ChatService {
   getSchema(): Observable<{ status: string; schema: any; schema_summary: string }> {
     return this.http.get<{ status: string; schema: any; schema_summary: string }>(`${this.apiUrl}/schema/current`);
   }
+
+  deleteSession(sessionId: string): Observable<{ status: string; message: string; session_id: string }> {
+    return this.http.delete<{ status: string; message: string; session_id: string }>(`${this.apiUrl}/session/${sessionId}`);
+  }
 }
 

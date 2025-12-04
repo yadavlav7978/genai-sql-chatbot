@@ -132,3 +132,56 @@ async def chat(
     except Exception as e:
         logger.error(f"Chat request failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Chat error: {e}")
+
+
+# =============================== SESSION DELETE ENDPOINT ===============================
+@router.delete("/session/{session_id}")
+async def delete_session(session_id: str):
+    """Delete a chat session by ID."""
+    
+    try:
+        logger.info(f"Session deletion requested for session ID: {session_id}")
+        
+        user_id = "web-user"  # future: from authentication
+        
+        # Try to get the session first to verify it exists
+        session = await session_service.get_session(
+            app_name="sql-chatbot",
+            user_id=user_id,
+            session_id=session_id
+        )
+        
+        if not session:
+            logger.warning(f"Session {session_id} not found for deletion.")
+            # Return success anyway (idempotent delete)
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "status": "success",
+                    "message": "Session not found or already deleted",
+                    "session_id": session_id
+                }
+            )
+        
+        # Delete the session
+        await session_service.delete_session(
+            app_name="sql-chatbot",
+            user_id=user_id,
+            session_id=session_id
+        )
+        
+        logger.info(f"Session {session_id} deleted successfully")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": "Session deleted successfully",
+                "session_id": session_id
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Session deletion failed for {session_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Session deletion error: {e}")
+

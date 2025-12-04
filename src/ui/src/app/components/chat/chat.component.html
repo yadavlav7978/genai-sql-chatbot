@@ -27,6 +27,19 @@
         <span class="agent-name">{{ getFormattedAgentName() }}</span>
       </div>
     </div>
+    <!-- Session Info Section -->
+    <div class="session-info-section" *ngIf="sessionId">
+      <div class="session-info-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        <span class="session-info-title">Active Session</span>
+      </div>
+      <div class="session-details">
+        <span class="session-id" [title]="sessionId">{{ sessionId }}</span>
+      </div>
+    </div>
 
     <div class="conversations-list">
       <div class="conversation-item" *ngFor="let conv of conversations">

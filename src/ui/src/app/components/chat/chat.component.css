@@ -1445,10 +1445,10 @@ tbody tr:hover {
   margin: 20px;
   margin-top: 0%;
   padding: 16px 18px;
-  background: #e4af72;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   border: 1.5px solid rgba(245, 158, 11, 0.25);
   border-radius: 14px;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
   backdrop-filter: blur(10px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1474,7 +1474,7 @@ tbody tr:hover {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  color: rgb(81, 80, 80);
+  color: white;
 }
 
 .agent-status-title {
@@ -1522,4 +1522,72 @@ tbody tr:hover {
   color: #92400e;
   flex: 1;
   text-align: left;
+}/* ===== SIDEBAR SESSION INFO SECTION ===== */
+.session-info-section {
+    margin: 20px;
+    margin-top: 12px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    border: 1.5px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.session-info-section:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    transform: translateY(-2px);
+}
+
+.session-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.session-info-header svg {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.session-info-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: white;
+    white-space: nowrap;
+}
+
+.session-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.session-id {
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(236, 253, 245, 0.95) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: inset 0 1px 3px rgba(16, 185, 129, 0.1);
+    font-size: 11px;
+    font-weight: 600;
+    color: #047857;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.session-id:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(236, 253, 245, 1) 100%);
+    transform: scale(1.02);
 }
