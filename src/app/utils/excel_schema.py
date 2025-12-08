@@ -139,7 +139,7 @@ def generate_schema(file_path: str) -> Dict[str, Any]:
         file_path_obj = Path(file_path)
         file_name = file_path_obj.name
 
-        logger.info(f"Starting schema generation for file: {file_name}")
+        logger.info(f"Starting schema generation for uploaded file: {file_name}")
 
         sheets_data = read_excel_file(file_path)
 

@@ -37,9 +37,8 @@ def execute_sql(query: str) -> str:
             if valid_files:
                 latest_file = max(valid_files, key=lambda f: f.stat().st_mtime)
                 file_path = str(latest_file)
-                logger.info(f"Using uploaded file for SQL execution: {latest_file.name}")
             else:
-                error_msg = "No Excel or CSV file found in the uploads folder."
+                error_msg = "No Excel or CSV file found in the uploads folder to execute SQL query."
                 logger.error(error_msg)
                 return json.dumps({
                     "success": False,
@@ -72,8 +71,7 @@ def execute_sql(query: str) -> str:
                 "columns": [],
             })
 
-        logger.info(f"Starting SQL execution on file: {file_path_obj.name}")
-        logger.debug(f"SQL query: {query}")
+        logger.info(f"SQL query: {query}")
 
         # Read data from Excel/CSV
         sheets_data = read_excel_file(file_path)
