@@ -25,12 +25,16 @@ INVALID: <reason>
 <<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 2 — SCHEMA VALIDATION
+STEP 2 — SCHEMA VALIDATION (MULTI-FILE AWARE)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Call get_schema().
-Check all tables and columns referenced.
+IMPORTANT: The schema contains ALL tables from ALL uploaded files.
 
-If schema mismatch:
+Check all tables and columns referenced in the SQL:
+- Valid tables may come from different uploaded files.
+- Cross-file JOINs and UNIONs are ALLOWED if tables exist.
+
+If schema mismatch (table or column not found in ANY file):
 <<<EXPLANATION>>>
 <2–4 lines explaining what failed>
 <<<ERROR>>>

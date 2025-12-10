@@ -1,14 +1,23 @@
-# =============================== FILE PURPOSE ===============================
 """
-This file contains helper functions that:
+Excel/CSV Schema Utilities
 
-- Read Excel/CSV files
-- Analyze columns and detect data types
-- Build a schema for each sheet/table
-- Prepare a summary of rows, columns, and tables
-- Convert numpy types into Python types for safe JSON output
+Purpose
+-------
+Provides lightweight helper functions for reading Excel/CSV files, analyzing their
+structure, and generating a clean schema that the SQL chatbot can use. This module
+only processes data; it does not handle API requests.
 
-This file does not handle API requests. It is used by the schema API and file manager.
+What this file does
+-------------------
+- Reads Excel/CSV files and loads them into DataFrames.
+- Detects table structure, column types, and potential primary keys.
+- Builds a schema describing rows, columns, and inferred SQL types.
+- Produces a human-readable schema summary.
+- Converts numpy values to safe Python types for JSON output.
+
+
+This module supports the File Manager and Schema APIs by providing all schema-related
+logic in one place.
 """
 
 
@@ -22,6 +31,88 @@ from src.app.configs.logger_config import get_logger
 
 # =============================== LOGGER ===============================
 logger = get_logger("Utils-Service-Excel-Schema")
+
+
+# =============================== SCHEMA GENERATION ===============================
+def generate_schema(file_path: str) -> Dict[str, Any]:
+    """Generate a complete schema for a given Excel/CSV file."""
+    try:
+        file_path_obj = Path(file_path)
+        file_name = file_path_obj.name
+
+        logger.info(f"Starting schema generation for uploaded file: {file_name}")
+
+        sheets_data = read_excel_file(file_path)
+
+        tables = []
+        total_rows = 0
+        total_columns = 0
+
+        for sheet_name, df in sheets_data.items():
+            df.columns = df.columns.str.strip().str.replace(" ", "_", regex=False)
+
+            columns = []
+            for col_name in df.columns:
+                columns.append(analyze_column(df[col_name], col_name))
+
+            tables.append({
+                "name": sheet_name,
+                "row_count": int(len(df)),
+                "column_count": int(len(df.columns)),
+                "columns": columns,
+            })
+
+            total_rows += len(df)
+            total_columns += len(df.columns)
+
+        schema = {
+            "file_path": str(file_path),
+            "file_name": file_name,
+            "file_type": file_path_obj.suffix.lower(),
+            "tables": tables,
+            "summary": {
+                "total_tables": len(tables),
+                "total_rows": total_rows,
+                "total_columns": total_columns,
+            },
+        }
+
+        schema = convert_numpy_types(schema)
+
+        return schema
+
+    except Exception as e:
+        logger.error(f"Failed to generate schema for {file_path}: {e}", exc_info=True)
+        raise ValueError(f"Failed to generate schema: {e}")
+
+
+# =============================== SCHEMA SUMMARY ===============================
+def get_schema_summary(schema: Dict[str, Any]) -> str:
+    """Create a simple, readable summary for a schema."""
+    summary = schema.get("summary", {})
+    tables = schema.get("tables", [])
+
+    lines = [
+        f"File: {schema.get('file_name', 'Unknown')}",
+        f"Type: {schema.get('file_type', 'Unknown')}",
+        f"Tables: {summary.get('total_tables', 0)}",
+        f"Total Rows: {summary.get('total_rows', 0)}",
+        f"Total Columns: {summary.get('total_columns', 0)}",
+        "",
+    ]
+
+    for table in tables:
+        lines.append(f"Table: {table['name']}")
+        lines.append(f"  Rows: {table['row_count']}, Columns: {table['column_count']}")
+
+        for col in table["columns"]:
+            pk = " [PK]" if col.get("is_potential_primary_key") else ""
+            nulls = f" ({col['null_count']} nulls)" if col["null_count"] > 0 else ""
+            lines.append(f"  - {col['name']}: {col['type']}{pk}{nulls}")
+
+        lines.append("")
+
+    return "\n".join(lines)
 
 
 # =============================== NUMPY TYPE CONVERSION ===============================
@@ -132,88 +223,7 @@ def read_excel_file(file_path: str) -> Dict[str, pd.DataFrame]:
     raise ValueError(f"Unsupported file type: {file_ext}")
 
 
-# =============================== SCHEMA GENERATION ===============================
-def generate_schema(file_path: str) -> Dict[str, Any]:
-    """Generate a complete schema for a given Excel/CSV file."""
-    try:
-        file_path_obj = Path(file_path)
-        file_name = file_path_obj.name
-
-        logger.info(f"Starting schema generation for uploaded file: {file_name}")
-
-        sheets_data = read_excel_file(file_path)
-
-        tables = []
-        total_rows = 0
-        total_columns = 0
-
-        for sheet_name, df in sheets_data.items():
-            df.columns = df.columns.str.strip().str.replace(" ", "_", regex=False)
-
-            columns = []
-            for col_name in df.columns:
-                columns.append(analyze_column(df[col_name], col_name))
-
-            tables.append({
-                "name": sheet_name,
-                "row_count": int(len(df)),
-                "column_count": int(len(df.columns)),
-                "columns": columns,
-            })
-
-            total_rows += len(df)
-            total_columns += len(df.columns)
-
-        schema = {
-            "file_path": str(file_path),
-            "file_name": file_name,
-            "file_type": file_path_obj.suffix.lower(),
-            "tables": tables,
-            "summary": {
-                "total_tables": len(tables),
-                "total_rows": total_rows,
-                "total_columns": total_columns,
-            },
-        }
-
-        schema = convert_numpy_types(schema)
-
-        logger.info(
-            f"Schema created for {file_name}. "
-            f"Tables: {len(tables)}, Rows: {total_rows}, Columns: {total_columns}"
-        )
-
-        return schema
-
-    except Exception as e:
-        logger.error(f"Failed to generate schema for {file_path}: {e}", exc_info=True)
-        raise ValueError(f"Failed to generate schema: {e}")
 
 
-# =============================== SCHEMA SUMMARY ===============================
-def get_schema_summary(schema: Dict[str, Any]) -> str:
-    """Create a simple, readable summary for a schema."""
-    summary = schema.get("summary", {})
-    tables = schema.get("tables", [])
 
-    lines = [
-        f"File: {schema.get('file_name', 'Unknown')}",
-        f"Type: {schema.get('file_type', 'Unknown')}",
-        f"Tables: {summary.get('total_tables', 0)}",
-        f"Total Rows: {summary.get('total_rows', 0)}",
-        f"Total Columns: {summary.get('total_columns', 0)}",
-        "",
-    ]
 
-    for table in tables:
-        lines.append(f"Table: {table['name']}")
-        lines.append(f"  Rows: {table['row_count']}, Columns: {table['column_count']}")
-
-        for col in table["columns"]:
-            pk = " [PK]" if col.get("is_potential_primary_key") else ""
-            nulls = f" ({col['null_count']} nulls)" if col["null_count"] > 0 else ""
-            lines.append(f"  - {col['name']}: {col['type']}{pk}{nulls}")
-
-        lines.append("")
-
-    return "\n".join(lines)

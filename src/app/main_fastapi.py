@@ -1,4 +1,16 @@
-"""FastAPI application entry point."""
+# =============================== FILE PURPOSE ===============================
+"""
+Main Application Entry Point - Initializes the FastAPI application, configures middleware, includes routers, and handles startup/shutdown events.
+
+This module provides:
+- FastAPI app initialization
+- CORS middleware configuration
+- Router inclusion (Chat, Schema, File Manager, Health)
+- Static file mounting
+- Startup and shutdown event handlers
+"""
+
+# =============================== IMPORTS ===============================
 import os
 from pathlib import Path
 from fastapi import FastAPI
@@ -6,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.app.api import (
-    chat_router, schema_router,
+    chat_router,
     health_router, file_manager_router
 )
 from src.app.configs.logger_config import setup_logger
@@ -49,7 +61,6 @@ app.add_middleware(
 # =============================== ROUTER SETUP ===============================
 
 app.include_router(chat_router)
-app.include_router(schema_router)
 app.include_router(file_manager_router)
 app.include_router(health_router)
 
@@ -73,7 +84,7 @@ async def startup_event():
     logger.info("🚀 Starting SQL ChatBot API server...")
 
     # Check for existing files on startup
-    file_manager.check_file_on_startup()
+    file_manager.check_files_on_startup()
 
     # Verify API key on startup
     if configure_api_key():

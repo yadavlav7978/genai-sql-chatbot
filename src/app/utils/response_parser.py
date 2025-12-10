@@ -1,5 +1,9 @@
+# =============================== FILE PURPOSE ===============================
 """
-Utility module for parsing agent responses.
+Response Parser Utility - Parses structured agent responses into clean dictionaries for the API.
+
+This module provides:
+- parse_agent_response function: Extracts Explanation, Query Result, SQL, and Error sections from agent output
 """
 
 

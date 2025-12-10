@@ -1,4 +1,14 @@
-"""Logger configuration for the application."""
+# =============================== FILE PURPOSE ===============================
+"""
+Logger Configuration - Sets up the application-wide logging configuration.
+
+This module provides:
+- Setup of console and file handlers
+- Configuration of log formats and levels
+- Rotating file handler for log management
+"""
+
+# =============================== IMPORTS ===============================
 import logging
 import sys
 from pathlib import Path

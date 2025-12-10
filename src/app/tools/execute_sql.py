@@ -1,14 +1,19 @@
-"""Tool for executing SQL queries on uploaded Excel/CSV files."""
+# =============================== FILE PURPOSE ===============================
+"""
+Execute SQL Tool - Provides functionality to execute SQL queries against the SQLite database.
+
+This module provides:
+- execute_sql function: Runs SELECT queries and returns results as JSON
+- Error handling for SQL execution
+- Integration with the persistent database
+"""
 
 # =============================== IMPORTS ===============================
 import json
 import sqlite3
-from pathlib import Path
-
-import pandas as pd
 
 from src.app.configs.logger_config import get_logger
-from src.app.utils.excel_schema import read_excel_file
+from src.app.utils.database_manager import get_db_connection, get_all_table_names
 
 # =============================== LOGGER ===============================
 logger = get_logger("Tool-Service-Execute-SQL")
@@ -17,38 +22,32 @@ logger = get_logger("Tool-Service-Execute-SQL")
 # =============================== MAIN FUNCTION ===============================
 def execute_sql(query: str) -> str:
     """
-    Execute a SQL query on data from the uploaded Excel/CSV file.
-
+    Execute a SQL query on data from the persistent database.
+    
     This function:
-    - Finds the latest uploaded Excel/CSV file in the 'uploads' folder
-    - Loads the data into an in-memory SQLite database
+    - Connects to the persistent SQLite database
     - Runs the given SQL query
     - Returns the result as a JSON string
+    
+    Args:
+        query: SQL SELECT query to execute
+        
+    Returns:
+        str: JSON string with structure:
+             {
+               "success": bool,
+               "data": list of dicts (rows),
+               "row_count": int,
+               "columns": list of column names,
+               "error": str (if success is False)
+             }
     """
     try:
-        # Find the latest uploaded Excel/CSV file
-        upload_dir = Path("uploads")
-        file_path = None
-
-        if upload_dir.exists():
-            files = list(upload_dir.glob("*.*"))
-            valid_files = [f for f in files if f.suffix.lower() in [".xlsx", ".xls", ".csv"]]
-
-            if valid_files:
-                latest_file = max(valid_files, key=lambda f: f.stat().st_mtime)
-                file_path = str(latest_file)
-            else:
-                error_msg = "No Excel or CSV file found in the uploads folder to execute SQL query."
-                logger.error(error_msg)
-                return json.dumps({
-                    "success": False,
-                    "error": error_msg,
-                    "data": [],
-                    "row_count": 0,
-                    "columns": [],
-                })
-        else:
-            error_msg = "Uploads folder not found."
+        # Check if there are any tables in the database
+        tables = get_all_table_names()
+        
+        if not tables:
+            error_msg = "No tables found in database. Please upload at least one Excel or CSV file first."
             logger.error(error_msg)
             return json.dumps({
                 "success": False,
@@ -57,43 +56,20 @@ def execute_sql(query: str) -> str:
                 "row_count": 0,
                 "columns": [],
             })
-
-        # Check that the file still exists
-        file_path_obj = Path(file_path)
-        if not file_path_obj.exists():
-            error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
-            return json.dumps({
-                "success": False,
-                "error": error_msg,
-                "data": [],
-                "row_count": 0,
-                "columns": [],
-            })
-
-        logger.info(f"SQL query: {query}")
-
-        # Read data from Excel/CSV
-        sheets_data = read_excel_file(file_path)
-
-        # Create in-memory SQLite database
-        conn = sqlite3.connect(":memory:")
-
-        # Load each sheet as a table
-        for sheet_name, df in sheets_data.items():
-            df.columns = df.columns.str.strip().str.replace(" ", "_", regex=False)
-            df.to_sql(sheet_name, conn, index=False, if_exists="replace")
-            logger.debug(
-                f"Loaded table '{sheet_name}' with {len(df)} rows and {len(df.columns)} columns"
-            )
-
-        # Run the query
+        
+        logger.info(f"Executing SQL query: {query}")
+        logger.debug(f"Available tables in database: {tables}")
+        
+        # Get database connection
+        conn = get_db_connection()
         cursor = conn.cursor()
+        
+        # Execute the query
         cursor.execute(query)
-
+        
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description] if cursor.description else []
-
+        
         # Build result rows as list of dicts
         data = []
         for row in rows:
@@ -102,22 +78,22 @@ def execute_sql(query: str) -> str:
                 value = row[i]
                 row_dict[col_name] = value if value is not None else None
             data.append(row_dict)
-
+        
         conn.close()
-
+        
         result = {
             "success": True,
             "data": data,
             "row_count": len(data),
             "columns": columns,
         }
-
+        
         logger.info(
             f"SQL query executed successfully. Rows returned: {len(data)}, Columns: {len(columns)}"
         )
-
+        
         return json.dumps(result, indent=2)
-
+    
     except sqlite3.Error as e:
         error_msg = f"SQL error while running query: {e}"
         logger.error(error_msg, exc_info=True)
@@ -128,7 +104,7 @@ def execute_sql(query: str) -> str:
             "row_count": 0,
             "columns": [],
         })
-
+    
     except Exception as e:
         error_msg = f"Unexpected error during SQL execution: {e}"
         logger.error(error_msg, exc_info=True)

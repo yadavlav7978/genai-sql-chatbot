@@ -17,23 +17,34 @@ export interface ChatResponse {
   session_id: string;
 }
 
+export interface FileInfo {
+  file_id: string;
+  filename: string;
+  table_name: string;
+  file_path: string;
+  schema?: any;
+  uploaded_at: string;
+}
+
 export interface UploadResponse {
   status: string;
-  message: string;
+  message?: string;
   file_id: string;
-  file_path: string;
+  file_path?: string;
   filename: string;
+  table_name: string;
   schema?: any;
   schema_summary?: string;
+  total_files: number;
+  max_files: number;
 }
 
 export interface FileStatusResponse {
   status: string;
-  has_file: boolean;
-  file_id?: string;
-  filename?: string;
-  file_path?: string;
-  message?: string;
+  has_files: boolean;  // Changed from has_file
+  files: FileInfo[];   // List of all files
+  total_files: number;
+  max_files: number;
 }
 
 @Injectable({
@@ -65,16 +76,20 @@ export class ChatService {
     return this.http.get<FileStatusResponse>(`${this.apiUrl}/file-status`);
   }
 
-  deleteFile(): Observable<{ status: string; message: string }> {
-    return this.http.delete<{ status: string; message: string }>(`${this.apiUrl}/file`);
+  // Delete a specific file by ID
+  deleteFile(fileId: string): Observable<{ status: string; message: string; file_id: string; total_files: number; max_files: number }> {
+    return this.http.delete<{ status: string; message: string; file_id: string; total_files: number; max_files: number }>(`${this.apiUrl}/file/${fileId}`);
   }
 
-  getSchema(): Observable<{ status: string; schema: any; schema_summary: string }> {
-    return this.http.get<{ status: string; schema: any; schema_summary: string }>(`${this.apiUrl}/schema/current`);
+  // Delete all files
+  deleteAllFiles(): Observable<{ status: string; message: string; deleted_count: number }> {
+    return this.http.delete<{ status: string; message: string; deleted_count: number }>(`${this.apiUrl}/files/all`);
   }
+
+
+
 
   deleteSession(sessionId: string): Observable<{ status: string; message: string; session_id: string }> {
     return this.http.delete<{ status: string; message: string; session_id: string }>(`${this.apiUrl}/session/${sessionId}`);
   }
 }
-

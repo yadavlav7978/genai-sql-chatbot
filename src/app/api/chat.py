@@ -1,3 +1,22 @@
+"""
+Chat API Endpoints - SQL Chatbot Backend
+
+Purpose
+-------
+Provides a clean interface for the frontend to communicate with the SQL chatbot. It validates
+incoming requests, ensures files are present, manages user sessions, sends messages to the
+agent runner, and returns a structured JSON response.
+
+What this file does
+-------------------
+- Accepts chat messages from the UI.
+- Verifies required Excel/CSV files are uploaded.
+- Creates or loads a chat session.
+- Sends the message to the orchestrator/agent and waits for the final response.
+- Parses the response into explanation, SQL query, results, and errors.
+- Allows deleting a session safely (idempotent).
+"""
+
 # =============================== IMPORTS ===============================
 from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import JSONResponse
@@ -7,9 +26,10 @@ from src.app.configs.logger_config import get_logger
 from src.app.utils.response_parser import parse_agent_response
 from src.app.services import session_service, runner
 from google.genai import types
+import asyncio
 
 # =============================== LOGGER ===============================
-logger = get_logger("Chat-Api-service")
+logger = get_logger("Chat-Api-Service")
 
 # =============================== ROUTER ===============================
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -24,31 +44,27 @@ async def chat(
     """Main SQL Chatbot endpoint handling user messages."""
 
     try:
-        # Validate user message
         if not message:
-            logger.warning("Chat request failed. Message is empty.")
             raise HTTPException(status_code=400, detail="Message required")
 
-        # Log incoming request details
+        # Trim log message for readability
         trimmed_msg = message[:100] + ("..." if len(message) > 100 else "")
         logger.info(
-            f"Chat request received. Session ID: {session_id if session_id else 'New Session'}, "
-            f"Message: '{trimmed_msg}'"
+            f"Chat request received. "
+            f"Session: {session_id or 'New Session'}, Message: '{trimmed_msg}'"
         )
 
-        # Check if file is uploaded
-        from src.app.api.file_manager import CURRENT_FILE_ID, UPLOAD_DIR
-        if not CURRENT_FILE_ID:
-            logger.warning("Chat request stopped. No uploaded file found.")
+        # Ensure file(s) exist before querying
+        from src.app.api.file_manager import FILE_REGISTRY
+        if not FILE_REGISTRY:
             raise HTTPException(
                 status_code=400,
                 detail="Please upload an Excel/CSV file before using the chat"
             )
 
-        from src.app.services import session_service, runner
-        from google.genai import types
+        logger.info(f"Processing chat with {len(FILE_REGISTRY)} uploaded file(s).")
 
-        user_id = "web-user"  # future: from authentication
+        user_id = "web-user"  # Future: real auth user ID
 
         # =============================== SESSION MANAGEMENT ===============================
         if not session_id:
@@ -58,10 +74,9 @@ async def chat(
                 user_id=user_id
             )
             session_id = session.id
-            logger.info(f"New session created with ID: {session_id}")
+            logger.info(f"New session created: {session_id}")
 
         else:
-            logger.info(f"Using existing session ID: {session_id}")
             session = await session_service.get_session(
                 app_name="sql-chatbot",
                 user_id=user_id,
@@ -69,31 +84,19 @@ async def chat(
             )
 
             if not session:
-                logger.warning(f"Session {session_id} not found. Creating a new session.")
+                logger.warning(f"Session not found. Creating new session with provided ID: {session_id}")
                 session = await session_service.create_session(
                     app_name="sql-chatbot",
                     user_id=user_id,
                     session_id=session_id
                 )
-                logger.info(f"New session created with ID: {session_id}")
-
-        # =============================== FILE CONTEXT ===============================
-        file_path = None
-        if CURRENT_FILE_ID:
-            # Find the file that matches the ID
-            for file in UPLOAD_DIR.glob(f"{CURRENT_FILE_ID}.*"):
-                file_path = str(file)
-                logger.info(f"Using uploaded file for context: {file.name}")
-                break
-        else:
-            logger.info("No uploaded file available for this chat.")
 
         # =============================== SEND MESSAGE TO GENAI ===============================
         user_msg = types.UserContent(message)
         selected_agent = None
-
-        logger.info("Sending message to AI model...")
         response_text = ""
+
+        logger.info("Sending message to agent...")
 
         async for event in runner.run_async(
             user_id=user_id,
@@ -109,12 +112,10 @@ async def chat(
                 logger.info(f"Orchestrator agent selected: {selected_agent}")
 
         trimmed_resp = response_text[:200] + ("..." if len(response_text) > 200 else "")
-        logger.info(f"AI response received: '{trimmed_resp}'")
+        logger.info(f"Model response received: '{trimmed_resp}'")
 
-        # =============================== PARSE AI RESPONSE ===============================
+        # =============================== PARSE RESPONSE ===============================
         parsed = parse_agent_response(response_text)
-
-        logger.info(f"Chat request processed successfully for session ID: {session_id}")
 
         return {
             "status": "success",
@@ -128,60 +129,49 @@ async def chat(
 
     except HTTPException:
         raise
-
     except Exception as e:
         logger.error(f"Chat request failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Chat error: {e}")
 
 
-# =============================== SESSION DELETE ENDPOINT ===============================
+# =============================== DELETE SESSION ===============================
 @router.delete("/session/{session_id}")
 async def delete_session(session_id: str):
-    """Delete a chat session by ID."""
-    
+    """Delete a chat session."""
+
     try:
-        logger.info(f"Session deletion requested for session ID: {session_id}")
-        
-        user_id = "web-user"  # future: from authentication
-        
-        # Try to get the session first to verify it exists
+        logger.info(f"Session delete requested: {session_id}")
+
+        user_id = "web-user"
+
         session = await session_service.get_session(
             app_name="sql-chatbot",
             user_id=user_id,
             session_id=session_id
         )
-        
+
         if not session:
-            logger.warning(f"Session {session_id} not found for deletion.")
-            # Return success anyway (idempotent delete)
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "status": "success",
-                    "message": "Session not found or already deleted",
-                    "session_id": session_id
-                }
-            )
-        
-        # Delete the session
+            logger.warning(f"Session {session_id} not found. Returning success (idempotent delete).")
+            return {
+                "status": "success",
+                "message": "Session not found or already deleted",
+                "session_id": session_id
+            }
+
         await session_service.delete_session(
             app_name="sql-chatbot",
             user_id=user_id,
             session_id=session_id
         )
-        
-        logger.info(f"Session {session_id} deleted successfully")
-        
-        return JSONResponse(
-            status_code=200,
-            content={
-                "status": "success",
-                "message": "Session deleted successfully",
-                "session_id": session_id
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Session deletion failed for {session_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Session deletion error: {e}")
 
+        logger.info(f"Session deleted: {session_id}")
+
+        return {
+            "status": "success",
+            "message": "Session deleted successfully",
+            "session_id": session_id
+        }
+
+    except Exception as e:
+        logger.error(f"Session deletion failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Session deletion error: {e}")

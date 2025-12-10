@@ -1,43 +1,102 @@
-# =============================== FILE PURPOSE ===============================
 """
-This file contains a helper function to fetch the current schema.
+Get Schema Tool
 
-It does not generate a new schema. Instead, it:
-- Returns the schema already stored in memory
-- If missing, tries to load it from the 'schemas' folder
-- Returns the schema in JSON format
-- Handles all related errors cleanly
+Purpose
+-------
+Provides a simple utility used by agents to fetch the schema for all tables currently
+loaded into the SQL chatbot system. It reads schema data from the file registry and
+returns a clean JSON structure summarizing each table.
 
-This is used by agents or other internal services that need schema data.
+What this file does
+-------------------
+- Reads all table schemas from the file registry.
+- Formats them into a consistent JSON structure.
+- Generates a human-readable summary of all tables.
+- Acts as a helper module for agents/tools — not an API route.
 """
 
 # =============================== IMPORTS ===============================
 import json
-from pathlib import Path
 
 from src.app.configs.logger_config import get_logger
-from src.app.api.file_manager import CURRENT_SCHEMA
-from src.app.utils.excel_schema import get_schema_summary
+
 # =============================== LOGGER ===============================
 logger = get_logger("Tool-Service-get-schema")
 
 
 # =============================== GET SCHEMA FUNCTION ===============================
 def get_schema():
+    """
+    Retrieve schemas for all tables currently available in the database.
+
+    Returns:
+        str: JSON string containing table schemas and a summarized overview.
+    """
     try:
-        from src.app.api.file_manager import CURRENT_SCHEMA
-        from src.app.utils.excel_schema import get_schema_summary
-        
-        logger.info("Fetching schema summary for the agent context.")
-        summary = get_schema_summary(CURRENT_SCHEMA)
+        from src.app.api.file_manager import FILE_REGISTRY
 
-        logger.info(f"Schema summary: {summary}")
+        logger.info("Fetching schemas for all tables in the database.")
 
-        return json.dumps({"success": True, "error": None, "schema": summary})
+        if not FILE_REGISTRY:
+            logger.warning("No files uploaded. Schema is empty.")
+            return json.dumps({
+                "success": False,
+                "error": "No files have been uploaded yet. Please upload Excel or CSV files first.",
+                "schema": {},
+                "summary": "No tables available in the database."
+            })
+
+        all_schemas = {}
+        table_summaries = []
+
+        for file_id, file_data in FILE_REGISTRY.items():
+            table_name = file_data.get("table_name")
+            original_filename = file_data.get("original_filename")
+            schema = file_data.get("schema")
+
+            if not schema:
+                logger.warning(f"No schema found for table '{table_name}'")
+                continue
+
+            tables = schema.get("tables", [])
+
+            if tables:
+                table_info = tables[0]
+
+                all_schemas[table_name] = {
+                    "file_name": original_filename,
+                    "table_name": table_name,
+                    "row_count": table_info.get("row_count", 0),
+                    "column_count": table_info.get("column_count", 0),
+                    "columns": table_info.get("columns", [])
+                }
+
+                columns_str = ", ".join([col["name"] for col in table_info.get("columns", [])])
+                table_summaries.append(
+                    f"Table: {table_name} (from file: {original_filename})\n"
+                    f"  Rows: {table_info.get('row_count', 0)}, Columns: {table_info.get('column_count', 0)}\n"
+                    f"  Column Names: {columns_str}"
+                )
+
+        summary = f"Database contains {len(all_schemas)} table(s):\n\n" + "\n\n".join(table_summaries)
+
+        result = {
+            "success": True,
+            "error": None,
+            "schema": all_schemas,
+            "summary": summary,
+            "total_tables": len(all_schemas)
+        }
+
+        logger.info("Schema summary for all files fetched successfully and passed to the agent for context.")
+
+        return json.dumps(result, indent=2)
+
     except Exception as e:
-        logger.error(f"Error fetching schema summary: {str(e)}")
-        return json.dumps({"success": False, "error": str(e), "schema": None})
-
-    
-
-
+        logger.error(f"Error fetching schema summary: {str(e)}", exc_info=True)
+        return json.dumps({
+            "success": False,
+            "error": str(e),
+            "schema": {},
+            "summary": "Failed to retrieve schema."
+        })

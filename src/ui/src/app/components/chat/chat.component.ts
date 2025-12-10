@@ -30,9 +30,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     userMessage: string = '';
     isLoading: boolean = false;
     sessionId: string | null = null;
-    uploadedFileId: string | null = null;
-    uploadedFileName: string | null = null;
-    uploadedFileSchema: any = null;
+    uploadedFiles: Array<{ file_id: string, filename: string, table_name: string, file_path: string, uploaded_at: string }> = [];
+    uploadedFilesSchemas: Map<string, any> = new Map();
     showSidebar: boolean = true;
     showSchema: boolean = false;
     lastSelectedAgent: string | null = null;
@@ -116,120 +115,84 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
 
     checkFileStatusOnInit(): void {
-        // First check localStorage for persisted file
-        const savedFileId = localStorage.getItem('uploadedFileId');
-        const savedFileName = localStorage.getItem('uploadedFileName');
+        // Check server for all uploaded files
+        this.chatService.checkFileStatus().subscribe({
+            next: (response: FileStatusResponse) => {
+                if (response.has_files && response.files && response.files.length > 0) {
+                    // Load ALL files, not just the first one
+                    this.uploadedFiles = response.files;
 
-        if (savedFileId && savedFileName) {
-            // Verify file still exists on server
-            this.chatService.checkFileStatus().subscribe({
-                next: (response: FileStatusResponse) => {
-                    if (response.has_file && response.file_id && response.filename) {
-                        // File exists - show ready to chat message
-                        this.uploadedFileId = response.file_id;
-                        this.uploadedFileName = response.filename;
-                        // Try to load schema from localStorage
-                        const savedSchema = localStorage.getItem('uploadedFileSchema');
-                        if (savedSchema) {
-                            try {
-                                this.uploadedFileSchema = JSON.parse(savedSchema);
-                            } catch (e) {
-                                console.error('Failed to parse saved schema', e);
-                            }
+                    // Populate schemas from response
+                    response.files.forEach(file => {
+                        if (file.schema) {
+                            this.uploadedFilesSchemas.set(file.file_id, file.schema);
                         }
-                        this.messages.push({
-                            role: 'assistant',
-                            content: `✅ File "${response.filename}" is already uploaded. You can directly start chatting! Ask me questions about your data.`,
-                            timestamp: new Date()
-                        });
-                    } else {
-                        // File was deleted, clear localStorage
-                        localStorage.removeItem('uploadedFileId');
-                        localStorage.removeItem('uploadedFileName');
-                        this.messages.push({
-                            role: 'assistant',
-                            content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                            timestamp: new Date()
-                        });
-                    }
-                },
-                error: (error) => {
-                    // On error, check if we have saved file info
-                    if (savedFileId && savedFileName) {
-                        this.uploadedFileId = savedFileId;
-                        this.uploadedFileName = savedFileName;
-                        // Load schema from localStorage
-                        const savedSchema = localStorage.getItem('uploadedFileSchema');
-                        if (savedSchema) {
-                            try {
-                                this.uploadedFileSchema = JSON.parse(savedSchema);
-                            } catch (e) {
-                                console.error('Failed to parse saved schema', e);
-                            }
-                        }
-                        this.messages.push({
-                            role: 'assistant',
-                            content: `✅ File "${savedFileName}" is available. You can start chatting!`,
-                            timestamp: new Date()
-                        });
-                    } else {
-                        this.messages.push({
-                            role: 'assistant',
-                            content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                            timestamp: new Date()
-                        });
-                    }
-                }
-            });
-        } else {
-            // No saved file, check server
-            this.chatService.checkFileStatus().subscribe({
-                next: (response: FileStatusResponse) => {
-                    if (response.has_file && response.file_id && response.filename) {
-                        // File exists - show ready to chat message
-                        this.uploadedFileId = response.file_id;
-                        this.uploadedFileName = response.filename;
-                        localStorage.setItem('uploadedFileId', response.file_id);
-                        localStorage.setItem('uploadedFileName', response.filename);
+                    });
 
-                        // Try to load schema from localStorage first
-                        const savedSchema = localStorage.getItem('uploadedFileSchema');
-                        if (savedSchema) {
-                            try {
-                                this.uploadedFileSchema = JSON.parse(savedSchema);
-                            } catch (e) {
-                                // If parsing fails, fetch from server
-                                this.loadSchemaFromServer();
-                            }
-                        } else {
-                            // Fetch schema from server
-                            this.loadSchemaFromServer();
-                        }
+                    // Save to localStorage
+                    localStorage.setItem('uploadedFiles', JSON.stringify(this.uploadedFiles));
+                    const schemasObj = Object.fromEntries(this.uploadedFilesSchemas);
+                    localStorage.setItem('uploadedFilesSchemas', JSON.stringify(schemasObj));
 
-                        this.messages.push({
-                            role: 'assistant',
-                            content: `✅ File "${response.filename}" is already uploaded. You can directly start chatting! Ask me questions about your data.`,
-                            timestamp: new Date()
-                        });
-                    } else {
-                        // No file - show upload required message
-                        this.messages.push({
-                            role: 'assistant',
-                            content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                            timestamp: new Date()
-                        });
-                    }
-                },
-                error: (error) => {
-                    // On error, show default message
+
+
+                    const fileCount = this.uploadedFiles.length;
+                    const fileNames = this.uploadedFiles.map(f => f.filename).join(', ');
+                    this.messages.push({
+                        role: 'assistant',
+                        content: `✅ ${fileCount} file(s) found: ${fileNames}. You can directly start chatting! Ask me questions about your data.`,
+                        timestamp: new Date()
+                    });
+                } else {
+                    // No files - show upload required message
+                    this.uploadedFiles = [];
+                    localStorage.removeItem('uploadedFiles');
+                    localStorage.removeItem('uploadedFilesSchemas');
                     this.messages.push({
                         role: 'assistant',
                         content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
                         timestamp: new Date()
                     });
                 }
-            });
-        }
+            },
+            error: (error) => {
+                // Try to load from localStorage as fallback
+                const savedFiles = localStorage.getItem('uploadedFiles');
+                if (savedFiles) {
+                    try {
+                        this.uploadedFiles = JSON.parse(savedFiles);
+
+                        // Load schemas from localStorage
+                        const savedSchemas = localStorage.getItem('uploadedFilesSchemas');
+                        if (savedSchemas) {
+                            const schemasObj = JSON.parse(savedSchemas);
+                            this.uploadedFilesSchemas = new Map(Object.entries(schemasObj));
+                        }
+
+                        const fileCount = this.uploadedFiles.length;
+                        const fileNames = this.uploadedFiles.map(f => f.filename).join(', ');
+                        this.messages.push({
+                            role: 'assistant',
+                            content: `✅ ${fileCount} file(s) available: ${fileNames}. You can start chatting!`,
+                            timestamp: new Date()
+                        });
+                    } catch (e) {
+                        console.error('Failed to load files from localStorage', e);
+                        this.messages.push({
+                            role: 'assistant',
+                            content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
+                            timestamp: new Date()
+                        });
+                    }
+                } else {
+                    this.messages.push({
+                        role: 'assistant',
+                        content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
+                        timestamp: new Date()
+                    });
+                }
+            }
+        });
     }
 
     ngAfterViewChecked(): void {
@@ -279,29 +242,37 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.isLoading = true;
         this.chatService.uploadFile(file).subscribe({
             next: (response: UploadResponse) => {
-                this.uploadedFileId = response.file_id;
-                this.uploadedFileName = response.filename;
-                // Schema will be loaded on-demand when user clicks "Show Schema"
-                this.uploadedFileSchema = response.schema || null;
+                // Add to files array
+                const newFile = {
+                    file_id: response.file_id,
+                    filename: response.filename,
+                    table_name: response.table_name || '',
+                    file_path: '',
+                    uploaded_at: new Date().toISOString()
+                };
+                this.uploadedFiles.push(newFile);
+
+                // Store schema if available
+                if (response.schema) {
+                    this.uploadedFilesSchemas.set(response.file_id, response.schema);
+                }
+
                 this.messages.push({
                     role: 'assistant',
-                    content: `✅ File "${response.filename}" uploaded successfully! You can now ask questions about your data.`,
+                    content: `✅ File "${response.filename}" uploaded successfully! Total files: ${this.uploadedFiles.length}. You can now ask questions about your data.`,
                     timestamp: new Date()
                 });
                 this.isLoading = false;
+
                 // Reset file input
                 if (this.fileInput) {
                     this.fileInput.nativeElement.value = '';
                 }
+
                 // Store in localStorage for persistence
-                if (this.uploadedFileId) {
-                    localStorage.setItem('uploadedFileId', this.uploadedFileId);
-                    localStorage.setItem('uploadedFileName', this.uploadedFileName || '');
-                    // Don't store schema if it's null (will be generated on-demand)
-                    if (this.uploadedFileSchema) {
-                        localStorage.setItem('uploadedFileSchema', JSON.stringify(this.uploadedFileSchema));
-                    }
-                }
+                localStorage.setItem('uploadedFiles', JSON.stringify(this.uploadedFiles));
+                const schemasObj = Object.fromEntries(this.uploadedFilesSchemas);
+                localStorage.setItem('uploadedFilesSchemas', JSON.stringify(schemasObj));
             },
             error: (error) => {
                 this.showError(`Upload failed: ${error.error?.detail || error.message}`);
@@ -310,28 +281,35 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         });
     }
 
-    deleteCurrentFile(): void {
-        if (!this.uploadedFileName) {
+    deleteFile(fileId: string): void {
+        const fileToDelete = this.uploadedFiles.find(f => f.file_id === fileId);
+        if (!fileToDelete) {
             return;
         }
 
-        if (!confirm(`Are you sure you want to delete "${this.uploadedFileName}"? You'll need to upload a new file to continue chatting.`)) {
+        if (!confirm(`Are you sure you want to delete "${fileToDelete.filename}"?`)) {
             return;
         }
 
         this.isLoading = true;
-        this.chatService.deleteFile().subscribe({
+        this.chatService.deleteFile(fileId).subscribe({
             next: () => {
-                this.uploadedFileId = null;
-                this.uploadedFileName = null;
-                this.uploadedFileSchema = null;
-                this.showSchema = false;
-                localStorage.removeItem('uploadedFileId');
-                localStorage.removeItem('uploadedFileName');
-                localStorage.removeItem('uploadedFileSchema');
+                // Remove from array
+                this.uploadedFiles = this.uploadedFiles.filter(f => f.file_id !== fileId);
+                this.uploadedFilesSchemas.delete(fileId);
+
+                // Update localStorage
+                localStorage.setItem('uploadedFiles', JSON.stringify(this.uploadedFiles));
+                const schemasObj = Object.fromEntries(this.uploadedFilesSchemas);
+                localStorage.setItem('uploadedFilesSchemas', JSON.stringify(schemasObj));
+
+                if (this.uploadedFiles.length === 0) {
+                    this.showSchema = false;
+                }
+
                 this.messages.push({
                     role: 'assistant',
-                    content: '🗑️ File deleted. Please upload a new Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
+                    content: `🗑️ File "${fileToDelete.filename}" deleted. ${this.uploadedFiles.length} file(s) remaining.`,
                     timestamp: new Date()
                 });
                 this.isLoading = false;
@@ -421,123 +399,79 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.messages = [];
         this.showSchema = false;
 
-        // Check if there's an existing file on the server
-        this.chatService.checkFileStatus().subscribe({
-            next: (response: FileStatusResponse) => {
-                if (response.has_file && response.file_id && response.filename) {
-                    // File exists on server - preserve it
-                    this.uploadedFileId = response.file_id;
-                    this.uploadedFileName = response.filename;
-
-                    // Update localStorage
-                    localStorage.setItem('uploadedFileId', response.file_id);
-                    localStorage.setItem('uploadedFileName', response.filename);
-
-                    // Try to load schema from localStorage or fetch from server
-                    const savedSchema = localStorage.getItem('uploadedFileSchema');
-                    if (savedSchema) {
-                        try {
-                            this.uploadedFileSchema = JSON.parse(savedSchema);
-                        } catch (e) {
-                            console.error('Failed to parse saved schema', e);
-                            this.loadSchemaFromServer();
-                        }
-                    } else {
-                        this.loadSchemaFromServer();
-                    }
-
-                    // Show message that file is ready for new chat
-                    this.messages.push({
-                        role: 'assistant',
-                        content: `🔄 New chat started! File "${response.filename}" is already loaded. You can start asking questions right away!`,
-                        timestamp: new Date()
-                    });
-                } else {
-                    // No file exists - clear everything and prompt upload
-                    this.uploadedFileId = null;
-                    this.uploadedFileName = null;
-                    this.uploadedFileSchema = null;
-                    localStorage.removeItem('uploadedFileId');
-                    localStorage.removeItem('uploadedFileName');
-                    localStorage.removeItem('uploadedFileSchema');
-
-                    this.messages.push({
-                        role: 'assistant',
-                        content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
-                        timestamp: new Date()
-                    });
-                }
-            },
-            error: (error) => {
-                // On error, check localStorage as fallback
-                const savedFileId = localStorage.getItem('uploadedFileId');
-                const savedFileName = localStorage.getItem('uploadedFileName');
-
-                if (savedFileId && savedFileName) {
-                    // Use saved file info
-                    this.uploadedFileId = savedFileId;
-                    this.uploadedFileName = savedFileName;
-
-                    // Try to load schema
-                    const savedSchema = localStorage.getItem('uploadedFileSchema');
-                    if (savedSchema) {
-                        try {
-                            this.uploadedFileSchema = JSON.parse(savedSchema);
-                        } catch (e) {
-                            console.error('Failed to parse saved schema', e);
-                        }
-                    }
-
-                    this.messages.push({
-                        role: 'assistant',
-                        content: `🔄 New chat started! File "${savedFileName}" is available. You can start asking questions!`,
-                        timestamp: new Date()
-                    });
-                } else {
-                    // No file available anywhere
-                    this.uploadedFileId = null;
-                    this.uploadedFileName = null;
-                    this.uploadedFileSchema = null;
-                    localStorage.removeItem('uploadedFileId');
-                    localStorage.removeItem('uploadedFileName');
-                    localStorage.removeItem('uploadedFileSchema');
-
-                    this.messages.push({
-                        role: 'assistant',
-                        content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
-                        timestamp: new Date()
-                    });
-                }
-            }
-        });
+        // Preserve all uploaded files - just clear the chat history
+        if (this.uploadedFiles.length > 0) {
+            const fileCount = this.uploadedFiles.length;
+            const fileNames = this.uploadedFiles.map(f => f.filename).join(', ');
+            this.messages.push({
+                role: 'assistant',
+                content: `🔄 New chat started! ${fileCount} file(s) remain loaded: ${fileNames}. You can start asking questions right away!`,
+                timestamp: new Date()
+            });
+        } else {
+            // No files uploaded
+            this.messages.push({
+                role: 'assistant',
+                content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
+                timestamp: new Date()
+            });
+        }
     }
 
     toggleSchema(): void {
         this.showSchema = !this.showSchema;
-        // Load schema from localStorage or fetch from server if not already loaded
-        if (this.showSchema && !this.uploadedFileSchema && this.uploadedFileName) {
-            const savedSchema = localStorage.getItem('uploadedFileSchema');
-            if (savedSchema) {
-                try {
-                    this.uploadedFileSchema = JSON.parse(savedSchema);
-                } catch (e) {
-                    console.error('Failed to parse saved schema', e);
-                    // If parsing fails, fetch from server
-                    this.loadSchemaFromServer();
-                }
-            } else {
-                // No saved schema, fetch from server
-                this.loadSchemaFromServer();
+    }
+
+    // Helper method to get schema for a specific file
+    getFileSchema(fileId: string): any {
+        return this.uploadedFilesSchemas.get(fileId);
+    }
+
+    // Get all schemas with their tables grouped
+    getAllSchemas(): any[] {
+        const schemas: any[] = [];
+        this.uploadedFiles.forEach(file => {
+            const schema = this.uploadedFilesSchemas.get(file.file_id);
+            if (schema) {
+                schemas.push({
+                    file_id: file.file_id,
+                    filename: file.filename,
+                    table_name: file.table_name,
+                    schema: schema
+                });
             }
-        }
+        });
+        return schemas;
     }
 
     getSchemaTables(): any[] {
-        return this.uploadedFileSchema?.tables || [];
+        // Get all tables from all files
+        const allTables: any[] = [];
+        this.uploadedFiles.forEach(file => {
+            const schema = this.uploadedFilesSchemas.get(file.file_id);
+            if (schema && schema.tables) {
+                allTables.push(...schema.tables);
+            }
+        });
+        return allTables;
     }
 
     getSchemaSummary(): any {
-        return this.uploadedFileSchema?.summary || {};
+        // Combine summaries from all files
+        const combinedSummary: any = {
+            total_tables: 0,
+            total_columns: 0,
+            total_rows: 0
+        };
+        this.uploadedFiles.forEach(file => {
+            const schema = this.uploadedFilesSchemas.get(file.file_id);
+            if (schema && schema.summary) {
+                combinedSummary.total_tables += schema.summary.total_tables || 0;
+                combinedSummary.total_columns += schema.summary.total_columns || 0;
+                combinedSummary.total_rows += schema.summary.total_rows || 0;
+            }
+        });
+        return combinedSummary;
     }
 
     formatTimestamp(date: Date): string {
@@ -546,20 +480,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     getTableKeys(obj: any): string[] {
         return obj ? Object.keys(obj) : [];
-    }
-
-    loadSchemaFromServer(): void {
-        this.chatService.getSchema().subscribe({
-            next: (response) => {
-                if (response.schema) {
-                    this.uploadedFileSchema = response.schema;
-                    localStorage.setItem('uploadedFileSchema', JSON.stringify(response.schema));
-                }
-            },
-            error: (error) => {
-                console.error('Failed to load schema:', error);
-            }
-        });
     }
 
     getFormattedAgentName(): string {

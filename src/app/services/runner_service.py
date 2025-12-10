@@ -1,4 +1,13 @@
-"""Runner service for ADK agent execution."""
+# =============================== FILE PURPOSE ===============================
+"""
+Runner Service - Initializes and manages the Google ADK Runner for executing agents.
+
+This module provides:
+- Initialization of the ADK Runner with the Orchestrator Agent
+- Integration with Session Service
+"""
+
+# =============================== IMPORTS ===============================
 from google.adk.runners import Runner
 from src.app.agents import orchestrator_agent
 from src.app.services import session_service
