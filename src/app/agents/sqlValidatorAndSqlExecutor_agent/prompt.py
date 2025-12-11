@@ -21,7 +21,7 @@ If unsafe:
 <<<EXPLANATION>>>
 <2–4 lines explaining why the operation is unsafe or disallowed>
 <<<ERROR>>>
-INVALID: <reason>
+Invalid Query: <reason>
 <<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -38,7 +38,7 @@ If schema mismatch (table or column not found in ANY file):
 <<<EXPLANATION>>>
 <2–4 lines explaining what failed>
 <<<ERROR>>>
-INVALID: <reason>
+Invalid Query: <reason>
 <<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

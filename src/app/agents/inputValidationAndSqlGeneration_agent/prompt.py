@@ -14,7 +14,7 @@ STEP 0 — RETRIEVE DATABASE SCHEMA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 You MUST call get_schema() first.
 If it fails:
-  INVALID: No database files uploaded. Please upload Excel or CSV files first.
+  Invalid Query: No database files uploaded. Please upload Excel or CSV files first.
 
 🔵 MULTI-FILE ARCHITECTURE:
 The system supports MULTIPLE uploaded files simultaneously. Each uploaded file
@@ -62,7 +62,7 @@ The database may contain tables from MULTIPLE uploaded files:
       SELECT 'sales_2024' as year, SUM(amount) as total FROM sales_2024;
 
 If the requested data is NOT in any available table:
-  INVALID: The database does not contain data about <requested_entity>. 
+  Invalid Query: The database does not contain data about <requested_entity>. 
   Available tables are: <list_table_names>.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -91,7 +91,7 @@ Using this, perform the following:
    (e.g., user asks for "students" but database contains only employees):
        → The query is INVALID.
        → Respond:
-         INVALID: The database does not contain data about <requested_entity>. It only stores <actual_entities>.
+         Invalid Query: The database does not contain data about <requested_entity>. It only stores <actual_entities>.
 
 4. Only proceed to Step 3 if the user's requested entity matches the type of data stored in the database.
 
@@ -109,7 +109,7 @@ STEP 3 — INPUT VALIDATION
 Validation outcomes:
 
 A) Unsafe or fully invalid → Respond:
-   INVALID: <reason>
+   Invalid Query: <reason>
 
 B) Valid + all tables/columns exist → Proceed to SQL generation.
 

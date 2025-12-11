@@ -653,12 +653,12 @@ tbody tr:hover {
   background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(192, 57, 43, 0.1) 100%);
   border: 2px solid rgba(231, 76, 60, 0.3);
   border-radius: 12px;
-  padding: 5px 5px;
+  padding: 5px 20px;
   color: #c0392b;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
 }
