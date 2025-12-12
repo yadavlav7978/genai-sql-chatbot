@@ -1,12 +1,3 @@
-# =============================== FILE PURPOSE ===============================
-"""
-Execute SQL Tool - Provides functionality to execute SQL queries against the SQLite database.
-
-This module provides:
-- execute_sql function: Runs SELECT queries and returns results as JSON
-- Error handling for SQL execution
-- Integration with the persistent database
-"""
 
 # =============================== IMPORTS ===============================
 import json
@@ -16,11 +7,11 @@ from src.app.configs.logger_config import get_logger
 from src.app.utils.database_manager import get_db_connection, get_all_table_names
 
 # =============================== LOGGER ===============================
-logger = get_logger("Tool-Service-Execute-SQL")
+logger = get_logger("MCPTool-Service-Execute-SQL")
 
 
 # =============================== MAIN FUNCTION ===============================
-def execute_sql(query: str) -> str:
+def execute_sql_query(query: str) -> str:
     """
     Execute a SQL query on data from the persistent database.
     

@@ -13,6 +13,7 @@ export interface ChatResponse {
   query_result?: string;
   sql_query?: string;
   error?: string;
+  suggestions?: string;
   selected_agent?: string;
   session_id: string;
 }

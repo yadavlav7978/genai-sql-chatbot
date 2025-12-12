@@ -18,7 +18,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 from src.app.configs.logger_config import get_logger
-from src.app.utils.excel_schema import read_excel_file
+from src.app.utils.schema_generator import read_excel_file
 
 # =============================== LOGGER ===============================
 logger = get_logger("Utils-Service-Database-Manager")

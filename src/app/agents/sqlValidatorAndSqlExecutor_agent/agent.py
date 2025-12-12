@@ -1,8 +1,11 @@
 from google.adk.agents import LlmAgent
 from .prompt import name, description, instruction
-from src.app.tools import execute_sql,get_schema
 from google.adk.models.lite_llm import LiteLlm
 import os
+from src.app.mcp.server.mcp_toolset import get_mcp_toolset
+
+
+mcp_tools=get_mcp_toolset()
 
 sqlValidatorAndSqlExecutor_agent = LlmAgent(
     model=LiteLlm(model=os.environ['MODEL']),
@@ -10,5 +13,5 @@ sqlValidatorAndSqlExecutor_agent = LlmAgent(
     description=description,
     instruction=instruction,
     output_key="query_result",  # stored in state['query_result']
-    tools=[execute_sql,get_schema]
+    tools=[mcp_tools]
 )

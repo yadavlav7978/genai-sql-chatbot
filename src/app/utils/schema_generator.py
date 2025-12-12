@@ -3,9 +3,15 @@ Excel/CSV Schema Utilities
 
 Purpose
 -------
-Provides lightweight helper functions for reading Excel/CSV files, analyzing their
-structure, and generating a clean schema that the SQL chatbot can use. This module
-only processes data; it does not handle API requests.
+This module is responsible for analyzing Excel/CSV files and generating a 
+detailed, structured schema that can be used by the SQL chatbot system.
+
+The goal of this module is to take raw spreadsheet files and convert them into
+a clean, machine-readable schema describing:
+- The structure of each table (number of rows, columns, etc.)
+- The data types of each column
+- Potential primary keys
+- Sample values for each column
 
 What this file does
 -------------------
@@ -15,9 +21,6 @@ What this file does
 - Produces a human-readable schema summary.
 - Converts numpy values to safe Python types for JSON output.
 
-
-This module supports the File Manager and Schema APIs by providing all schema-related
-logic in one place.
 """
 
 
@@ -35,7 +38,7 @@ logger = get_logger("Utils-Service-Excel-Schema")
 
 # =============================== SCHEMA GENERATION ===============================
 def generate_schema(file_path: str) -> Dict[str, Any]:
-    """Generate a complete schema for a given Excel/CSV file."""
+    """Generate a complete schema for an uploaded Excel/CSV file."""
     try:
         file_path_obj = Path(file_path)
         file_name = file_path_obj.name
@@ -87,8 +90,9 @@ def generate_schema(file_path: str) -> Dict[str, Any]:
 
 
 # =============================== SCHEMA SUMMARY ===============================
-def get_schema_summary(schema: Dict[str, Any]) -> str:
-    """Create a simple, readable summary for a schema."""
+def generate_schema_summary(schema: Dict[str, Any]) -> str:
+    """Create a human-readable summary for the schema of a single file."""
+    
     summary = schema.get("summary", {})
     tables = schema.get("tables", [])
 

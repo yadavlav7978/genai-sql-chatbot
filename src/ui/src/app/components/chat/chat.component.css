@@ -1682,3 +1682,8 @@ tbody tr:hover {
     grid-template-columns: repeat(1, 1fr);
   }
 }
+
+/* Suggestions Section */
+.suggestions-content {
+  margin-top: 15px;
+}

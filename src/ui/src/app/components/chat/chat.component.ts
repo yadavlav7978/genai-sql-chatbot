@@ -11,6 +11,7 @@ interface Message {
     explanation?: string;
     queryResult?: string;
     sql_query?: string;
+    suggestions?: string;
     error?: string;
     selectedAgent?: string;
 }
@@ -354,6 +355,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     explanation: response.explanation,
                     queryResult: response.query_result,
                     sql_query: response.sql_query,
+                    suggestions: response.suggestions,
                     error: response.error,
                     selectedAgent: response.selected_agent,
                     timestamp: new Date()

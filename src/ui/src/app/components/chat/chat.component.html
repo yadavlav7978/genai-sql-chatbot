@@ -269,7 +269,13 @@
                   <div class="section-content" [innerHTML]="formatMessage(message.queryResult)"></div>
                 </ng-template>
               </ng-container>
+              <!-- Suggestions Section -->
+              <div class="section-content suggestions-content" *ngIf="message.suggestions"
+                [innerHTML]="formatMessage(message.suggestions)">
+              </div>
             </div>
+
+
 
             <!-- Error Message -->
             <div class="error-message" *ngIf="message.error">

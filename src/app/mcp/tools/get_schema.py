@@ -3,9 +3,8 @@ Get Schema Tool
 
 Purpose
 -------
-Provides a simple utility used by agents to fetch the schema for all tables currently
-loaded into the SQL chatbot system. It reads schema data from the file registry and
-returns a clean JSON structure summarizing each table.
+This module provides a tool-level function used by agents (such as MCP tools) 
+to retrieve a consolidated schema overview for all tables currently registered in the SQL chatbot system.
 
 What this file does
 -------------------
@@ -21,11 +20,11 @@ import json
 from src.app.configs.logger_config import get_logger
 
 # =============================== LOGGER ===============================
-logger = get_logger("Tool-Service-get-schema")
+logger = get_logger("MCPTool-Service-get-schema")
 
 
 # =============================== GET SCHEMA FUNCTION ===============================
-def get_schema():
+def get_schema_summary():
     """
     Retrieve schemas for all tables currently available in the database.
 
@@ -33,9 +32,13 @@ def get_schema():
         str: JSON string containing table schemas and a summarized overview.
     """
     try:
-        from src.app.api.file_manager import FILE_REGISTRY
+        # Import the shared registry function that reads from disk
+        from src.app.utils.shared_registry import get_file_registry_from_disk
 
         logger.info("Fetching schemas for all tables in the database.")
+        
+        # Get FILE_REGISTRY from disk metadata instead of in-memory registry
+        FILE_REGISTRY = get_file_registry_from_disk()
 
         if not FILE_REGISTRY:
             logger.warning("No files uploaded. Schema is empty.")
@@ -88,7 +91,7 @@ def get_schema():
             "total_tables": len(all_schemas)
         }
 
-        logger.info("Schema summary for all files fetched successfully and passed to the agent for context.")
+        logger.info(f"Schema summary fetched successfully: {len(all_schemas)} table(s)")
 
         return json.dumps(result, indent=2)
 

@@ -8,3 +8,5 @@ uvicorn[standard]>=0.24.0
 python-multipart>=0.0.6
 annotated-types
 litellm
+fastmcp
+mcp

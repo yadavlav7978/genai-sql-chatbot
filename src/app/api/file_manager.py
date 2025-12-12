@@ -24,7 +24,7 @@ from typing import Optional, Dict, List
 import re
 
 from src.app.configs.logger_config import get_logger
-from src.app.utils.excel_schema import generate_schema, get_schema_summary
+from src.app.utils.schema_generator import generate_schema, generate_schema_summary
 from src.app.utils.database_manager import (
     load_file_to_db,
     remove_table_from_db,
@@ -193,7 +193,7 @@ async def upload_file(file: UploadFile = File(...)):
 
         # Schema generation
         schema = generate_schema(str(file_path))
-        schema_summary = get_schema_summary(schema)
+        schema_summary = generate_schema_summary(schema)
 
 
         if schema_summary:
