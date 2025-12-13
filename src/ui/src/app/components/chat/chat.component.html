@@ -49,38 +49,104 @@
     </div>
 
 
-    <div class="sidebar-footer" *ngIf="uploadedFiles && uploadedFiles.length > 0">
-      <div class="file-status-info">
-        <div class="file-status-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 12l2 2 4-4" />
-            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
-            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
-            <path d="M13 12h3" />
-            <path d="M8 12H5" />
-          </svg>
-          <span class="status-title">File Status ({{ uploadedFiles.length }})</span>
-        </div>
-
-        <!-- List ALL files -->
-        <div class="uploaded-files-list">
-          <div class="uploaded-file-item" *ngFor="let file of uploadedFiles">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-            <span class="file-name" title="{{ file.filename }}">{{ file.filename }}</span>
-            <button class="btn-icon delete-file-btn" (click)="deleteFile(file.file_id)" title="Delete file">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="sidebar-footer">
+      <button class="btn btn-primary upload-files-btn" (click)="openUploadModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        Upload Files
+      </button>
     </div>
   </aside>
+
+  <!-- Upload Modal -->
+  <div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()"></div>
+  <div class="upload-modal" *ngIf="showUploadModal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h2>Upload Files</h2>
+        <p>Upload documents you want to share with your team</p>
+      </div>
+      <button class="btn-icon close-modal-btn" (click)="closeUploadModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Left Section: Drag & Drop -->
+      <div class="upload-section left-section" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)">
+        <div class="drop-zone">
+          <div class="cloud-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17.5 19C19.9853 19 22 16.9853 22 14.5C22 12.132 20.177 10.244 17.819 10.022C17.3821 6.13454 14.0981 3.125 10 3.125C5.8 3.125 2.36 6.35 2.04 10.56C0.979998 11.08 0.25 12.18 0.25 13.44C0.25 15.41 1.84 17 3.81 17H5" />
+              <path d="M12 11L12 21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 15L12 11L16 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="drop-text">Drag and drop files here</p>
+          <p class="separator">-OR-</p>
+          <label class="btn btn-primary browse-btn">
+            Browse Files
+            <input type="file" multiple accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" style="display: none;">
+          </label>
+        </div>
+      </div>
+
+      <!-- Right Section: File List -->
+      <div class="upload-section right-section">
+        <div class="files-header">
+          <h3>Uploaded Files</h3>
+          <button class="btn-text-danger" *ngIf="uploadedFiles.length > 0" (click)="deleteAllFiles()">
+            Delete All Files
+          </button>
+        </div>
+
+        <div class="file-list-preview" *ngIf="uploadedFiles.length > 0; else noFiles">
+          <div class="file-preview-item" *ngFor="let file of uploadedFiles">
+             <div class="file-icon" [ngClass]="{'xls': file.filename.endsWith('.xls') || file.filename.endsWith('.xlsx'), 'csv': file.filename.endsWith('.csv')}">
+               <!-- Simple File Icon based on type -->
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="file.filename.endsWith('.csv')">
+                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                 <polyline points="14 2 14 8 20 8"></polyline>
+                 <text x="8" y="18" font-size="6" fill="currentColor" font-weight="bold">CSV</text>
+               </svg>
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!file.filename.endsWith('.csv')">
+                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                 <polyline points="14 2 14 8 20 8"></polyline>
+                 <line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="2"></line>
+                 <line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" stroke-width="2"></line>
+                 <line x1="10" y1="9" x2="9" y2="9" stroke="currentColor" stroke-width="2"></line>
+               </svg>
+             </div>
+             <div class="file-details">
+               <span class="file-name" title="{{file.filename}}">{{file.filename}}</span>
+               <div class="progress-bar-container">
+                 <div class="progress-bar filled"></div>
+               </div>
+             </div>
+             <span class="upload-status">Completed</span>
+             <button class="btn-icon delete-btn-small" (click)="deleteFile(file.file_id)">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+               </svg>
+             </button>
+          </div>
+        </div>
+        <ng-template #noFiles>
+          <div class="empty-state">
+            <p>No files uploaded yet.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Chat Area -->
   <main class="chat-main">

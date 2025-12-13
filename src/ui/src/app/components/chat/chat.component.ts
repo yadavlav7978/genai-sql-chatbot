@@ -35,6 +35,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     uploadedFilesSchemas: Map<string, any> = new Map();
     showSidebar: boolean = true;
     showSchema: boolean = false;
+    showUploadModal: boolean = false;
     lastSelectedAgent: string | null = null;
     conversations: Array<{ id: string; title: string; lastMessage: string }> = [];
 
@@ -395,11 +396,83 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.showSidebar = !this.showSidebar;
     }
 
+    openUploadModal(): void {
+        this.showUploadModal = true;
+    }
+
+    closeUploadModal(): void {
+        this.showUploadModal = false;
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        event.dataTransfer!.dropEffect = 'copy';
+    }
+
+    onDragLeave(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const files = event.dataTransfer?.files;
+        if (files && files.length > 0) {
+            // Handle multiple files if needed, for now just taking the first one or iterating
+            Array.from(files).forEach(file => this.uploadFile(file));
+        }
+    }
+
+    deleteAllFiles(): void {
+        if (!this.uploadedFiles || this.uploadedFiles.length === 0) return;
+
+        if (!confirm('Are you sure you want to delete ALL files? This action cannot be undone.')) {
+            return;
+        }
+
+        // We'll delete them one by one for now as we don't have a bulk delete API
+        const filesClone = [...this.uploadedFiles];
+        let deleteCount = 0;
+
+        filesClone.forEach(file => {
+            this.chatService.deleteFile(file.file_id).subscribe({
+                next: () => {
+                    this.uploadedFiles = this.uploadedFiles.filter(f => f.file_id !== file.file_id);
+                    this.uploadedFilesSchemas.delete(file.file_id);
+                    deleteCount++;
+
+                    // Check if all are deleted
+                    if (deleteCount === filesClone.length) {
+                        this.updateLocalStorageAfterDelete();
+                        // Reset to fresh state: clear chat, clear agent, show welcome message
+                        this.lastSelectedAgent = null;
+                        this.newConversation();
+                    }
+                },
+                error: (err) => {
+                    console.error(`Failed to delete file ${file.filename}`, err);
+                }
+            });
+        });
+    }
+
+    private updateLocalStorageAfterDelete(): void {
+        localStorage.setItem('uploadedFiles', JSON.stringify(this.uploadedFiles));
+        const schemasObj = Object.fromEntries(this.uploadedFilesSchemas);
+        localStorage.setItem('uploadedFilesSchemas', JSON.stringify(schemasObj));
+        if (this.uploadedFiles.length === 0) {
+            this.showSchema = false;
+        }
+    }
+
     newConversation(): void {
         // Clear session and messages
         this.sessionId = null;
         this.messages = [];
         this.showSchema = false;
+        this.lastSelectedAgent = null; // Clear selected agent
 
         // Preserve all uploaded files - just clear the chat history
         if (this.uploadedFiles.length > 0) {
