@@ -150,11 +150,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     this.uploadedFiles = [];
                     localStorage.removeItem('uploadedFiles');
                     localStorage.removeItem('uploadedFilesSchemas');
-                    this.messages.push({
-                        role: 'assistant',
-                        content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                        timestamp: new Date()
-                    });
                 }
             },
             error: (error) => {
@@ -180,18 +175,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                         });
                     } catch (e) {
                         console.error('Failed to load files from localStorage', e);
-                        this.messages.push({
-                            role: 'assistant',
-                            content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                            timestamp: new Date()
-                        });
+                        console.error('Failed to load files from localStorage', e);
                     }
                 } else {
-                    this.messages.push({
-                        role: 'assistant',
-                        content: '📁 No data file found. Please upload an Excel file (.xlsx, .xls, or .csv) to start chatting about your data.',
-                        timestamp: new Date()
-                    });
+                    // No files - show upload required message logic handled by template
                 }
             }
         });
@@ -484,12 +471,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                 timestamp: new Date()
             });
         } else {
-            // No files uploaded
-            this.messages.push({
-                role: 'assistant',
-                content: '📁 New chat started! Please upload an Excel file (.xlsx, .xls, or .csv) to begin chatting about your data.',
-                timestamp: new Date()
-            });
+            // No files uploaded - visual welcome state will naturally appear
         }
     }
 
