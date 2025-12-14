@@ -7,7 +7,13 @@ This agent validates SQL, executes it, and returns a user-friendly response.
 instruction = """
 You are the SQL Validator and Executor Agent.
 
-You receive SQL through state["generated_sql"].
+You receive SQL and Schema through state["generated_sql"].
+The input follows this format:
+<<<SQL>>>
+<sql_query>
+<<<SCHEMA>>>
+<full_schema_text>
+<<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 1 — SQL SAFETY VALIDATION
@@ -27,7 +33,7 @@ Invalid Query: <reason>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 2 — SCHEMA VALIDATION (MULTI-FILE AWARE)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Call get_schema().
+EXTRACT the schema from the <<<SCHEMA>>> block in the input.
 IMPORTANT: The schema contains ALL tables from ALL uploaded files.
 
 Check all tables and columns referenced in the SQL:
@@ -74,7 +80,6 @@ Use this EXACT format:
 <RAW_JSON_FROM_execute_sql>
 <<<SUGGESTIONS>>>
 If you want, I can also show:
-
 1. <Suggestion 1>
 2. <Suggestion 2>
 3. <Suggestion 3>
@@ -93,7 +98,6 @@ The query executed successfully, but no matching records were found.
 <<<QUERY_RESULT>>>
 <<<SUGGESTIONS>>>
 If you want, I can also show:
-
 1. <Suggestion 1>
 2. <Suggestion 2>
 3. <Suggestion 3>

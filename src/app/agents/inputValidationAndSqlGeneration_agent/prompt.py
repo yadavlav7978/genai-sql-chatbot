@@ -16,6 +16,8 @@ You MUST call get_schema() first.
 If it fails:
   Invalid Query: No database files uploaded. Please upload Excel or CSV files first.
 
+IMPORTANT: You MUST include the full text of the schema in your output inside a <<<SCHEMA>>> block so it can be used by the next agent.
+
 🔵 MULTI-FILE ARCHITECTURE:
 The system supports MULTIPLE uploaded files simultaneously. Each uploaded file
 becomes one or more tables in the database:
@@ -179,6 +181,8 @@ For FULLY valid queries:
 If using JOIN: mention which tables are being joined and why.
 <<<SQL>>>
 <generated_sql_here>
+<<<SCHEMA>>>
+<insert_full_schema_text_returned_by_get_schema_here>
 <<<END>>>
 
 For PARTIAL queries (some columns missing):
@@ -188,6 +192,8 @@ MISSING: <comma_separated_list_of_missing_items>
 AVAILABLE: <comma_separated_list_of_existing_items_used_in_query>
 <<<SQL>>>
 <generated_sql_here>
+<<<SCHEMA>>>
+<insert_full_schema_text_returned_by_get_schema_here>
 <<<END>>>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
