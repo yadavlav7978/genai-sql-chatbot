@@ -1,5 +1,4 @@
 # SQL ChatBot 🤖
-
 An intelligent SQL chatbot powered by **Google ADK (Agent Development Kit)** that allows users to interact with Excel/CSV files using natural language queries. Upload your data file, ask questions in plain English, and get instant SQL query results.
 
 ---
