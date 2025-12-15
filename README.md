@@ -186,6 +186,7 @@ pip install -r requirements.txt
 ### **Step 5: Set Up API Key**
 
 Create a `.env` file in the project root:
+
 ✅ Option 1: Google Gemini (Google ADK)
 ```env
 GOOGLE_API_KEY=your_google_api_key_here
