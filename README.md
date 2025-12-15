@@ -1,27 +1,8 @@
 # SQL ChatBot 🤖
 
-An intelligent SQL chatbot powered by **Google ADK (Agent Development Kit)** that allows users to interact with Excel/CSV files using natural language queries. Upload your data file, ask questions in plain English, and get instant SQL query results.
-
----
-
-## 📖 Table of Contents
-
-- [What is SQL ChatBot?](#what-is-sql-chatbot)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [Available Agents](#available-agents)
-- [How Agents Communicate](#how-agents-communicate)
-- [Implementation Details](#implementation-details)
-- [Setup & Installation](#setup--installation)
-- [How to Use](#how-to-use)
-- [Tech Stack](#tech-stack)
-
----
-
-## 🎯 What is SQL ChatBot?
-
-SQL ChatBot is an **AI-powered conversational interface** that enables users to query Excel and CSV files using natural language instead of writing complex SQL queries. The system automatically:
-
+SQL ChatBot is an intelligent, **multi-agent GenAI application** built using **Google ADK (Agent Development Kit)**.  
+It enables users to interact with Excel and CSV files using **natural language**, automatically translating questions into **safe, schema-aware SQL queries** and returning clear, structured results through a modern web interface.
+The system automatically:
 - Understands your questions in plain English
 - Generates safe, valid SQL queries
 - Executes queries on your uploaded data
@@ -33,66 +14,21 @@ SQL ChatBot is an **AI-powered conversational interface** that enables users to 
 
 ---
 
-## ✨ Key Features
+## ❓ Why SQL ChatBot?
 
-- **Natural Language Processing** - Ask questions in plain English
-- **Multi-Agent Architecture** - Specialized agents handle different tasks for better accuracy
-- **Automatic SQL Generation** - No need to write SQL manually
-- **Excel/CSV Support** - Upload and query Excel or CSV files
-- **Safety First** - Only read-only SELECT queries are allowed
-- **Schema Awareness** - Validates queries against actual column names
-- **Conversational Memory** - Maintains context across multiple questions
-- **Web Interface** - Clean Angular-based UI for easy interaction
+Traditional data analysis requires users to write complex SQL queries and understand database schemas and table relationships. This can be time-consuming and challenging, especially for users who are not familiar with SQL.
+
+SQL ChatBot removes this barrier by allowing users to ask questions in plain English.
+The chatbot understands natural language queries, generates safe and accurate SQL in the background, executes it on the data, and returns results in a clear, readable format.
 
 ---
+
 
 ## 🏗️ System Architecture
 
 The SQL ChatBot uses a **multi-agent architecture** powered by Google ADK. The system consists of:
 
-```
-┌─────────────────────────────────────────────────┐
-│           User Query (Natural Language)         │
-└─────────────────────┬───────────────────────────┘
-                      │
-                      ▼
-         ┌────────────────────────┐
-         │  Orchestrator Agent    │ ◄── Entry Point
-         │  (Routes Requests)     │
-         └────────┬───────────────┘
-                  │
-         ┌────────┴────────┐
-         │                  │
-         ▼                  ▼
-  ┌─────────────┐    ┌──────────────┐
-  │  Greeting   │    │  SQL Agent   │
-  │   Agent     │    │ (Sequential) │
-  └─────────────┘    └──────┬───────┘
-                            │
-              ┌─────────────┴─────────────┐
-              │                            │
-              ▼                            ▼
-┌──────────────────────────┐  ┌──────────────────────────┐
-│ Input Validation &       │  │ SQL Validator &          │
-│ SQL Generation Agent     │──│ SQL Executor Agent       │
-└──────────────────────────┘  └──────────────────────────┘
-              │                            │
-              │         Uses Tools         │
-              └────────────┬───────────────┘
-                           │
-              ┌────────────┴────────────┐
-              │                          │
-              ▼                          ▼
-       ┌──────────┐             ┌──────────────┐
-       │get_schema│             │ execute_sql  │
-       └──────────┘             └──────────────┘
-                                        │
-                                        ▼
-                              ┌──────────────────┐
-                              │ Query Results    │
-                              │ (Markdown Table) │
-                              └──────────────────┘
-```
+![Data Flow Diagram](doc\Sql-chatbot-architecture.png)
 
 ---
 
@@ -104,12 +40,13 @@ The chatbot uses **5 specialized AI agents**, each with a specific responsibilit
 - **Responsibility:** This is the main entry point agent that routes user queries to the appropriate sub-agent.
 It analyzes the user's intent and transfers to either the greeting agent or SQL agent.
 
----
 
 ### 2️⃣ **Greeting Agent**
-- **Responsibility:** This agent welcomes the user and provides an introduction to the SQL Chatbot system.It explains what the chatbot can do and how the user should proceed.
+- **Responsibility:** This agent welcomes the user and provides an introduction to the SQL Chatbot system. It explains what the chatbot can do and how the user should proceed.
+- **Capabilities:**
+  - Fetches schema using `get_schema`
+  - Generates 4 sample questions relevant to the user's data
 
----
 
 ### 3️⃣ **SQL Agent** (Sequential Coordinator)
 - **Responsibility:** SQL Agent handles SQL query sequentially through 2 subagents.
@@ -117,7 +54,6 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
   1. Input Validation & SQL Generation Agent : - Validate user input + Generate SQL
   2. SQL Validator & SQL Executor Agent : - Validate SQL + Execute SQL
 
----
 
 ### 4️⃣ **Input Validation & SQL Generation Agent**
 - **Responsibilities:**
@@ -126,80 +62,107 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
   3. Checks if requested columns/tables exist
   4. Generates valid SQL query
 - **Tools:** `get_schema`
-- **Output:** Stores generated SQL in `state['generated_sql']`
+- **Output:** 
+  - Stores generated SQL in `state['generated_sql']`
+  - **Crucial:** Passes the full retrieved `schema` to the next agent
 - **Validation Rules:**
   - Rejects unsafe queries
   - Warns about missing columns
   - Only uses existing schema columns
 
----
 
 ### 5️⃣ **SQL Validator & SQL Executor Agent**
 - **Responsibilities:**
   1. This agent validates SQL, executes it, and returns a user-friendly response.
-  2. Cross-checks against schema using `get_schema()`
+  2. Cross-checks against schema (received from previous agent, does **not** call `get_schema` again)
   3. Executes SQL using `execute_sql()` tool
-- **Tools:** `execute_sql`, `get_schema`
-- **Input:** Reads SQL from `state['generated_sql']`
+  4. Generates post-query **Suggestions** (follow-up questions)
+- **Tools:** `execute_sql`
+- **Input:** Reads SQL and Schema from `state['generated_sql']`
 - **Output:** Stores results in `state['query_result']`
 
 ---
 
-## 🔄 How Agents Communicate
+## 🔌 Model Context Protocol (MCP)
 
-The agents communicate in a **sequential, ordered workflow**:
+This application uses the **Model Context Protocol (MCP)** to standardize how AI agents interact with external tools and data.
 
-```
-Step 1: User sends message
-   │
-   ▼
-Step 2: Orchestrator Agent receives message
-   │   • Analyzes intent
-   │   • Decides: Greeting or SQL query?
-   │
-   ├─► [Greeting Path]
-   │   └─► Greeting Agent responds → Done ✓
-   │
-   └─► [SQL Path]
-       │
-       Step 3: SQL Agent (Sequential) activates
-       │
-       ├─► Sub-Agent 1: Input Validation & SQL Generation
-       │   │
-       │   ├─► Calls get_schema() tool
-       │   ├─► Validates user input
-       │   ├─► Generates SQL query
-       │   └─► Stores in state['generated_sql']
-       │
-       └─► Sub-Agent 2: SQL Validator & Executor
-           │   (Automatically runs AFTER Sub-Agent 1)
-           │
-           ├─► Reads state['generated_sql']
-           ├─► Validates SQL is safe
-           ├─► Calls execute_sql(query) tool
-           ├─► Formats results as table
-           └─► Stores in state['query_result']
-           
-Step 4: Results returned to user ✓
-```
+### **Architecture**
+- **MCP Server**: A standalone process (running on port `8001`) that exposes the `get_schema` and `execute_sql` tools. It has direct access to the database and file system.
+- **MCP Client**: The AI Agents act as clients, connecting to the server using **SSE (Server-Sent Events)**.
+
+### **Why MCP?**
+- **Decoupling**: Tools are separated from the agent logic.
+- **Standardization**: Provides a unified interface for tool discovery and execution.
+- **Scalability**: The server can be deployed independently or scaled separately.
 
 
-### **Frontend (Angular)**
+---
 
-#### **Location:** `src/ui/`
+## 📂 File Upload & Data Flow
 
-- **Component:** `chat.component.ts` - Handles user input and displays messages
-- **Styling:** `chat.component.css` - Beautiful, modern UI
-- **API Calls:** Sends messages to `/api/chat` endpoint
+Understanding how your data moves from upload to query execution:
+
+### **1. File Upload**
+🟢 **Step 1: Uploading the File**
+- You upload an Excel or CSV file using the web interface.
+- The system accepts only valid file types: `.csv`, `.xlsx`, `.xls`.
+- Duplicate files are automatically detected and avoided.
+
+👉 **Goal:** Safely accept your data.
+
+### **2. Storage**
+🟢 **Step 2: Saving the File**
+- The uploaded file is stored securely in the `uploads/` folder.
+- Each file is renamed using a unique ID (UUID) to avoid conflicts.
+- File details like:
+  - Original file name
+  - Upload time
+  - File hash
+  are saved separately in the `metadata/` folder.
+
+👉 **Goal:** Keep files organized and traceable.
+
+### **3. Schema Extraction**
+🟢 **Step 3: Creating the Schema**
+- The system reads the uploaded file to understand:
+  - Column names
+  - Data types (text, number, date, etc.)
+- A schema (structure of the data) is generated in JSON format.
+- This schema is saved in the `schemas/` folder.
+
+👉 **Goal:** Help the AI understand your data correctly.
+
+### **4. Database Ingestion**
+🟢 **Step 4: Storing Data in the Database**
+- The file’s data is loaded using Pandas.
+- All rows are inserted into a persistent SQLite database (`database/chatbot.db`).
+- This database is optimized for fast and reliable SQL queries.
+
+👉 **Goal:** Make your data easy and fast to query.
+
+### **5. Query Execution**
+🟢 **Step 5: Asking Questions**
+- When you ask a question in natural language:
+  - The AI uses the stored schema to understand your data.
+  - A safe SQL query is generated.
+  - The query is executed on the SQLite database.
+  - Results are returned to you in a clear and user-friendly format.
+
+👉 **Goal:** Get instant answers from your uploaded data.
 
 ---
 
 ## 🚀 Setup & Installation
+Follow the steps below to set up and run the SQL ChatBot locally.
 
 ### **Prerequisites**
+Make sure the following are installed on your system:
 - Python 3.8+
 - Node.js 14+ (for Angular frontend)
-- Google API Key (for Google ADK)
+- One of the following API providers:
+- Google Gemini API Key (via Google ADK), or
+- Azure OpenAI API Key
 
 ### **Step 1: Clone Repository**
 ```bash
@@ -226,26 +189,33 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### **Step 5: Set Up Google API Key**
+### **Step 5: Set Up API Key**
 
 Create a `.env` file in the project root:
+✅ Option 1: Google Gemini (Google ADK)
 ```env
 GOOGLE_API_KEY=your_google_api_key_here
 MODEL=gemini-2.0-flash-exp
 ```
+✅ Option 2: Azure OpenAI
+```env
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint_here
+AZURE_OPENAI_API_VERSION=your_api_version_here
+MODEL=your_azure_openai_model_name
 
-Or set environment variable:
-```bash
-# Windows PowerShell
-$env:GOOGLE_API_KEY="your_google_api_key_here"
-$env:MODEL="gemini-2.0-flash-exp"
-
-# Linux/Mac
-export GOOGLE_API_KEY="your_google_api_key_here"
-export MODEL="gemini-2.0-flash-exp"
 ```
 
-### **Step 6: Run Backend Server**
+
+### **Step 6: Run MCP Server**
+The MCP server must be running to allow AI agents to access tools such as schema retrieval and SQL execution.
+```bash
+python -m src.app.mcp.server.mcp_server
+```
+MCP Server will start at: `http://localhost:8001`
+
+### **Step 7: Start the Backend (FastAPI) Server**
+Open a new terminal, activate the virtual environment again, and run:
 ```bash
 # Using Python module
 python -m src.app.main_fastapi
@@ -256,7 +226,7 @@ uvicorn src.app.main_fastapi:app --host 0.0.0.0 --port 8000 --reload
 
 Backend will start at: `http://localhost:8000`
 
-### **Step 7: Run Frontend (Optional)**
+### **Step 8: Run Frontend **
 ```bash
 cd src/ui
 npm install
@@ -301,6 +271,8 @@ Use natural language to query your data:
 ### **Backend**
 - **FastAPI** - Modern Python web framework
 - **Google ADK** - Agent Development Kit for multi-agent AI
+- **Model Context Protocol (MCP)** - Standardized tool interface
+- **FastMCP** - Framework for building MCP servers
 - **Google Gemini** - LLM for natural language understanding
 - **Azure OpenAI** - LLM for natural language understanding
 - **SQLite** - In-memory database for query execution
@@ -334,9 +306,13 @@ genai-sql-chatbot/
 │   │   │   ├── chat.py
 │   │   │   ├── file_manager.py
 │   │   │   └── health.py
-│   │   ├── tools/            # Agent tools
-│   │   │   ├── get_schema.py
-│   │   │   └── execute_sql.py
+│   │   ├── mcp/              # MCP Implementation
+│   │   │   ├── server/       # MCP Server & Toolset
+│   │   │   │   ├── mcp_server.py
+│   │   │   │   └── mcp_toolset.py
+│   │   │   └── tools/        # Actual Tool Implementations
+│   │   │       ├── get_schema.py
+│   │   │       └── execute_sql.py
 │   │   ├── services/         # Business logic
 │   │   ├── utils/            # Helper functions
 │   │   ├── configs/          # Configuration
