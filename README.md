@@ -8,10 +8,6 @@ The system automatically:
 - Executes queries on your uploaded data
 - Returns results in an easy-to-read format
 
-**Example:**
-- **You ask:** "Show me all employees older than 30"
-- **ChatBot:** Generates `SELECT * FROM Employees WHERE Age > 30`, executes it, and displays the results
-
 ---
 
 ## ❓ Why SQL ChatBot?
@@ -28,7 +24,7 @@ The chatbot understands natural language queries, generates safe and accurate SQ
 
 The SQL ChatBot uses a **multi-agent architecture** powered by Google ADK. The system consists of:
 
-![Data Flow Diagram](doc\Sql-chatbot-architecture.png)
+![Data Flow Diagram](doc/Sql-chatbot-architecture.png)
 
 ---
 
