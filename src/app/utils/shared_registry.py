@@ -82,6 +82,8 @@ def get_file_registry_from_disk() -> Dict[str, Dict]:
                 f"(table: {metadata.get('table_name')})"
             )
             
+        except json.JSONDecodeError:
+            logger.warning(f"Metadata file for {file_id} is empty or corrupted (likely being written), skipping...")
         except Exception as e:
             logger.error(f"Failed to load metadata for {file_id}: {e}", exc_info=True)
     

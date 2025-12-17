@@ -30,6 +30,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     messages: Message[] = [];
     userMessage: string = '';
     isLoading: boolean = false;
+    activeRequests: number = 0;
     sessionId: string | null = null;
     uploadedFiles: Array<{ file_id: string, filename: string, table_name: string, file_path: string, uploaded_at: string }> = [];
     uploadedFilesSchemas: Map<string, any> = new Map();
@@ -40,6 +41,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     conversations: Array<{ id: string; title: string; lastMessage: string }> = [];
 
     constructor(private chatService: ChatService, private sanitizer: DomSanitizer) { }
+
+    private updateLoadingState(): void {
+        this.isLoading = this.activeRequests > 0;
+    }
 
     ngOnInit(): void {
         this.checkFileStatusOnInit();
@@ -208,8 +213,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     onFileSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            this.uploadFile(file);
+            Array.from(input.files).forEach(file => this.uploadFile(file));
         }
     }
 
@@ -228,7 +232,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        this.isLoading = true;
+        this.activeRequests++;
+        this.updateLoadingState();
+
         this.chatService.uploadFile(file).subscribe({
             next: (response: UploadResponse) => {
                 // Add to files array
@@ -251,7 +257,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     content: `✅ File "${response.filename}" uploaded successfully! Total files: ${this.uploadedFiles.length}. You can now ask questions about your data.`,
                     timestamp: new Date()
                 });
-                this.isLoading = false;
+                
+                this.activeRequests--;
+                this.updateLoadingState();
 
                 // Reset file input
                 if (this.fileInput) {
@@ -265,7 +273,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             },
             error: (error) => {
                 this.showError(`Upload failed: ${error.error?.detail || error.message}`);
-                this.isLoading = false;
+                this.activeRequests--;
+                this.updateLoadingState();
             }
         });
     }
@@ -280,7 +289,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        this.isLoading = true;
+        this.activeRequests++;
+        this.updateLoadingState();
+
         this.chatService.deleteFile(fileId).subscribe({
             next: () => {
                 // Remove from array
@@ -301,11 +312,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     content: `🗑️ File "${fileToDelete.filename}" deleted. ${this.uploadedFiles.length} file(s) remaining.`,
                     timestamp: new Date()
                 });
-                this.isLoading = false;
+                
+                this.activeRequests--;
+                this.updateLoadingState();
             },
             error: (error) => {
                 this.showError(`Delete failed: ${error.error?.detail || error.message}`);
-                this.isLoading = false;
+                this.activeRequests--;
+                this.updateLoadingState();
             }
         });
     }
@@ -325,7 +339,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             timestamp: new Date()
         });
 
-        this.isLoading = true;
+        this.activeRequests++;
+        this.updateLoadingState();
 
         const request: ChatRequest = {
             message: messageText,
@@ -356,7 +371,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     this.lastSelectedAgent = response.selected_agent;
                 }
 
-                this.isLoading = false;
+                this.activeRequests--;
+                this.updateLoadingState();
             },
             error: (error) => {
                 this.messages.push({
@@ -365,7 +381,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     error: error.error?.detail || error.message || 'An error occurred',
                     timestamp: new Date()
                 });
-                this.isLoading = false;
+                this.activeRequests--;
+                this.updateLoadingState();
             }
         });
     }

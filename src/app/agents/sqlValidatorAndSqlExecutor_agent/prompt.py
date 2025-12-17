@@ -63,7 +63,7 @@ If SQL is valid:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEP 4 — PREPARE FOLLOW-UP QUESTIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Based on the current user question and the schema, generate up to 4 relevant follow-up questions.
+Based on the current user question and the schema, generate up to 3 relevant follow-up questions.
 These questions should be:
 - Related to the current query
 - Valid based on the schema
@@ -83,7 +83,6 @@ If you want, I can also show:
 1. <Suggestion 1>
 2. <Suggestion 2>
 3. <Suggestion 3>
-4. <Suggestion 4>
 
 Just tell me what you want next!
 <<<END>>>
@@ -101,7 +100,6 @@ If you want, I can also show:
 1. <Suggestion 1>
 2. <Suggestion 2>
 3. <Suggestion 3>
-4. <Suggestion 4>
 
 Just tell me what you want next!
 <<<END>>>
