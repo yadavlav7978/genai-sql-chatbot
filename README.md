@@ -22,8 +22,6 @@ The chatbot understands natural language queries, generates safe and accurate SQ
 
 ## 🏗️ System Architecture
 
-The SQL ChatBot uses a **multi-agent architecture** powered by Google ADK. The system consists of:
-
 ![Data Flow Diagram](doc/Sql-chatbot-architecture.png)
 
 ---
@@ -40,8 +38,8 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 ### 2️⃣ **Greeting Agent**
 - **Responsibility:** This agent welcomes the user and provides an introduction to the SQL Chatbot system. It explains what the chatbot can do and how the user should proceed.
 - **Capabilities:**
-  - Fetches schema using `get_schema`
-  - Generates 4 sample questions relevant to the user's data
+  - Fetches schema using `get_schema` tool
+  - Generates sample questions relevant to the user's data
 
 
 ### 3️⃣ **SQL Agent** (Sequential Coordinator)
@@ -70,7 +68,7 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 ### 5️⃣ **SQL Validator & SQL Executor Agent**
 - **Responsibilities:**
   1. This agent validates SQL, executes it, and returns a user-friendly response.
-  2. Cross-checks against schema (received from previous agent, does **not** call `get_schema` again)
+  2. Cross-checks against schema (received from previous agent)
   3. Executes SQL using `execute_sql()` tool
   4. Generates post-query **Suggestions** (follow-up questions)
 - **Tools:** `execute_sql`
@@ -188,6 +186,7 @@ pip install -r requirements.txt
 ### **Step 5: Set Up API Key**
 
 Create a `.env` file in the project root:
+
 ✅ Option 1: Google Gemini (Google ADK)
 ```env
 GOOGLE_API_KEY=your_google_api_key_here
