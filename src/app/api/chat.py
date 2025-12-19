@@ -112,6 +112,7 @@ async def chat(
                 logger.info(f"Orchestrator agent selected: {selected_agent}")
 
         trimmed_resp = response_text[:200] + ("..." if len(response_text) > 200 else "")
+        # logger.info(f"Response text: {response_text}")
         logger.info(f"Model response received: '{trimmed_resp}'")
 
         # =============================== PARSE RESPONSE ===============================
@@ -124,6 +125,7 @@ async def chat(
             "sql_query": parsed["sql_query"],
             "error": parsed["error"],
             "suggestions": parsed.get("suggestions"),
+            "structured_response": parsed.get("structured_response"),
             "selected_agent": selected_agent,
             "session_id": session_id
         }

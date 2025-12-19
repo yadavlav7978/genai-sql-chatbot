@@ -11,9 +11,9 @@ interface Message {
     explanation?: string;
     queryResult?: string;
     sql_query?: string;
-    suggestions?: string;
+    suggestions?: string[];
     error?: string;
-    selectedAgent?: string;
+    selected_agent?: string;
 }
 
 @Component({
@@ -257,7 +257,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     content: `✅ File "${response.filename}" uploaded successfully! Total files: ${this.uploadedFiles.length}. You can now ask questions about your data.`,
                     timestamp: new Date()
                 });
-                
+
                 this.activeRequests--;
                 this.updateLoadingState();
 
@@ -312,7 +312,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     content: `🗑️ File "${fileToDelete.filename}" deleted. ${this.uploadedFiles.length} file(s) remaining.`,
                     timestamp: new Date()
                 });
-                
+
                 this.activeRequests--;
                 this.updateLoadingState();
             },
@@ -360,7 +360,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     sql_query: response.sql_query,
                     suggestions: response.suggestions,
                     error: response.error,
-                    selectedAgent: response.selected_agent,
+                    selected_agent: response.selected_agent,
                     timestamp: new Date()
                 };
 
@@ -501,59 +501,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         return this.uploadedFilesSchemas.get(fileId);
     }
 
-    // Get all schemas with their tables grouped
-    getAllSchemas(): any[] {
-        const schemas: any[] = [];
-        this.uploadedFiles.forEach(file => {
-            const schema = this.uploadedFilesSchemas.get(file.file_id);
-            if (schema) {
-                schemas.push({
-                    file_id: file.file_id,
-                    filename: file.filename,
-                    table_name: file.table_name,
-                    schema: schema
-                });
-            }
-        });
-        return schemas;
-    }
-
-    getSchemaTables(): any[] {
-        // Get all tables from all files
-        const allTables: any[] = [];
-        this.uploadedFiles.forEach(file => {
-            const schema = this.uploadedFilesSchemas.get(file.file_id);
-            if (schema && schema.tables) {
-                allTables.push(...schema.tables);
-            }
-        });
-        return allTables;
-    }
-
-    getSchemaSummary(): any {
-        // Combine summaries from all files
-        const combinedSummary: any = {
-            total_tables: 0,
-            total_columns: 0,
-            total_rows: 0
-        };
-        this.uploadedFiles.forEach(file => {
-            const schema = this.uploadedFilesSchemas.get(file.file_id);
-            if (schema && schema.summary) {
-                combinedSummary.total_tables += schema.summary.total_tables || 0;
-                combinedSummary.total_columns += schema.summary.total_columns || 0;
-                combinedSummary.total_rows += schema.summary.total_rows || 0;
-            }
-        });
-        return combinedSummary;
-    }
 
     formatTimestamp(date: Date): string {
         return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    getTableKeys(obj: any): string[] {
-        return obj ? Object.keys(obj) : [];
+
+
+    formatQueryName(queryName: string): string {
+        // Convert snake_case to Title Case
+        // e.g., "Age_of_Arjun" -> "Age of Arjun"
+        return queryName
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
     }
 
     getFormattedAgentName(): string {
@@ -570,26 +531,67 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         return agentNameMap[this.lastSelectedAgent] || this.lastSelectedAgent;
     }
 
-    parseQueryResult(queryResult: string): any {
+    isMultiQuery(queryResult: string): boolean {
         if (!queryResult || queryResult.trim() === '') {
-            return null;
+            return false;
         }
 
         try {
             const parsed = JSON.parse(queryResult);
-            if (parsed.success && parsed.data && Array.isArray(parsed.data)) {
-                return {
-                    success: true,
-                    data: parsed.data,
-                    columns: parsed.columns || [],
-                    row_count: parsed.row_count || 0
-                };
+            // Check if it's a multi-query result (object with multiple query keys)
+            // Each key should point to an object with success, data, row_count, columns
+            if (typeof parsed === 'object' && !Array.isArray(parsed) && !parsed.success) {
+                const keys = Object.keys(parsed);
+                if (keys.length > 0) {
+                    // Check if at least one key has the multi-query structure
+                    const firstKey = keys[0];
+                    if (parsed[firstKey] && typeof parsed[firstKey] === 'object' &&
+                        'success' in parsed[firstKey] && 'data' in parsed[firstKey]) {
+                        return true;
+                    }
+                }
             }
-            return null;
+            return false;
         } catch (e) {
-            console.error('Failed to parse query result:', e);
-            return null;
+            return false;
         }
     }
+
+    parseMultiQueryResult(queryResult: string): any[] {
+        if (!queryResult || queryResult.trim() === '') {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(queryResult);
+            const results: any[] = [];
+
+            // Each key is a query name, value is the result object
+            for (const queryName of Object.keys(parsed)) {
+                const queryData = parsed[queryName];
+                if (queryData && typeof queryData === 'object') {
+                    results.push({
+                        queryName: queryName,
+                        success: queryData.success || false,
+                        summary: queryData.summary || null,
+                        data: queryData.data || [],
+                        columns: queryData.columns || [],
+                        row_count: queryData.row_count || 0,
+                        error: queryData.error || null
+                    });
+                }
+            }
+
+            return results;
+        } catch (e) {
+            console.error('Failed to parse multi-query result:', e);
+            return [];
+        }
+    }
+
+
+
+
+
 }
 
