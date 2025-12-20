@@ -160,4 +160,48 @@ The <<<EXPLANATION>>> section must:
 - Clearly state whether the result contains single or multiple records
 - The total number of records found
 - Why multiple rows appear (same name, same attribute, etc.)
-- Be written in simple, non-technical language"""
+- Be written in simple, non-technical language
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔹 JSON OUTPUT RULES (CRITICAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+When returning query results in the <<<QUERY_RESULT>>> section:
+
+1. **NEVER OMIT DATA**: Return the COMPLETE result set from execute_sql()
+   - Do NOT truncate or summarize data
+   - Do NOT add comments like "// other records omitted"
+   - Include ALL rows returned by the query
+
+2. **VALID JSON ONLY**: 
+   - JSON does NOT support comments (no // or /* */)
+   - Do NOT add explanatory comments inside the JSON
+   - Every comma, bracket, and quote must be valid JSON
+
+3. **RETURN RAW RESULT**: 
+   - Use the exact output from execute_sql() tool
+   - Do NOT modify the data structure
+   - Do NOT add your own commentary inside the JSON
+
+WRONG ❌:
+```json
+{
+  "data": [
+    {"id": 1, "name": "Alice"},
+    // Other 49 records omitted for brevity
+  ]
+}
+```
+
+CORRECT ✅:
+```json
+{
+  "data": [
+    {"id": 1, "name": "Alice"},
+    {"id": 2, "name": "Bob"},
+    ... all records here ...
+  ]
+}
+```
+
+If you need to explain data size, do it in the <<<EXPLANATION>>> section, NOT in the JSON!
+"""

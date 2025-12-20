@@ -504,6 +504,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 100%;
+  overflow-x: auto;
+  /* Allow horizontal scroll for wide content */
 }
 
 .message-user .message-content {
@@ -593,14 +596,19 @@
   background: white;
   border: 2px solid rgba(102, 126, 234, 0.1);
   border-radius: 12px;
-  overflow: hidden;
   max-height: 250px;
+  overflow-x: auto;
+  /* Horizontal scroll for wide tables */
   overflow-y: auto;
+  /* Vertical scroll for tall tables */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 table {
-  width: 100%;
+  width: max-content;
+  /* Allow table to expand based on content */
+  min-width: 100%;
+  /* But at least fill the container */
   border-collapse: collapse;
   font-size: 12.5px;
 }
@@ -623,6 +631,8 @@ th {
   font-size: 11px;
   letter-spacing: 0.5px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+  white-space: nowrap;
+  /* Prevent column headers from wrapping */
 }
 
 td {
@@ -632,6 +642,8 @@ td {
   background: white;
   line-height: 0;
   font-size: 12px;
+  white-space: nowrap;
+  /* Prevent cell content from wrapping */
 }
 
 tbody tr {
