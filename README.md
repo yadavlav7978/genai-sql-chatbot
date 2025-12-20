@@ -28,28 +28,28 @@ The chatbot understands natural language queries, generates safe and accurate SQ
 ## ✨ Key Features of SQL ChatBot
 
 #### 1️⃣ **Ask questions in plain English**
-No need to write complex SQL queries. Just ask questions in natural language and get clear, human-readable answers.
+- No need to write complex SQL queries. Just ask questions in natural language and get clear, human-readable answers.
 
 #### 2️⃣ **Query multiple files at once**
-Ask questions across multiple uploaded Excel or CSV files without writing SQL.
+- Ask questions across multiple uploaded Excel or CSV files without writing SQL.
 
 #### 3️⃣ **Supports complex multi-part questions**
-The chatbot can process complex queries that request different types of information in one question (not limited to single or multiple people).
+- The chatbot can process complex queries that request different types of information in one question (not limited to single or multiple people).
 
 #### 4️⃣ **Read-only and safe by design**
-Only SELECT (read) operations are allowed. Your data is always protected from updates, deletes, or inserts. No write operations are allowed.
+- Only SELECT (read) operations are allowed. Your data is always protected from updates, deletes, or inserts. No write operations are allowed.
 
 #### 5️⃣ **Smart follow-up question suggestions and starter questions for new users**
-The chatbot suggests relevant follow-up questions after each response and also provides starter questions when a chat begins or when a general query is asked, helping users explore data easily without getting stuck.
+- The chatbot suggests relevant follow-up questions after each response and also provides starter questions when a chat begins or when a general query is asked,helping users explore data easily without getting stuck.
 
 #### 6️⃣ **Agent visibility in the UI**
-The chat interface clearly shows **which AI agent is selected by the orchestrator** for each response.
+- The chat interface clearly shows **which AI agent is selected by the orchestrator** for each response.
 
 #### 7️⃣ **View generated database schema**
-With the **"Show Schema"** button, users can see all schemas generated from the uploaded files.
+- With the **"Show Schema"** button, users can see all schemas generated from the uploaded files.
 
 #### 8️⃣ **MCP (Model Context Protocol) integration**
-MCP support allows the chatbot to **securely expose tools, schemas, and resources**, making it more extensible and powerful.
+- MCP support allows the chatbot to **securely expose tools, schemas, and resources**, making it more extensible and powerful.
 
 ---
 
