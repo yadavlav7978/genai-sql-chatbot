@@ -351,6 +351,13 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             next: (response: ChatResponse) => {
                 this.sessionId = response.session_id;
 
+                // DEBUG: Log the raw response from backend
+                console.log('=== BACKEND RESPONSE ===' );
+                console.log('Full response:', response);
+                console.log('Explanation:', response.explanation);
+                console.log('Query Result (raw):', response.query_result);
+                console.log('SQL Query:', response.sql_query);
+
                 // Handle structured response
                 const message: Message = {
                     role: 'assistant',
@@ -363,6 +370,17 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                     selected_agent: response.selected_agent,
                     timestamp: new Date()
                 };
+
+                // DEBUG: Test the parsing immediately
+                if (response.query_result) {
+                    console.log('=== TESTING PARSING ===');
+                    const isMulti = this.isMultiQuery(response.query_result);
+                    console.log('Is Multi Query?', isMulti);
+                    if (isMulti) {
+                        const parsed = this.parseMultiQueryResult(response.query_result);
+                        console.log('Parsed Results:', parsed);
+                    }
+                }
 
                 this.messages.push(message);
 
@@ -532,45 +550,66 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     }
 
     isMultiQuery(queryResult: string): boolean {
+        console.log('=== isMultiQuery CALLED ===');
+        console.log('Input queryResult type:', typeof queryResult);
+        console.log('Input queryResult value:', queryResult);
+        
         if (!queryResult || queryResult.trim() === '') {
+            console.log('Empty query result, returning false');
             return false;
         }
 
         try {
             const parsed = JSON.parse(queryResult);
+            console.log('Parsed JSON:', parsed);
+            console.log('Is object?', typeof parsed === 'object');
+            console.log('Is array?', Array.isArray(parsed));
+            console.log('Has success?', 'success' in parsed);
+            
             // Check if it's a multi-query result (object with multiple query keys)
             // Each key should point to an object with success, data, row_count, columns
             if (typeof parsed === 'object' && !Array.isArray(parsed) && !parsed.success) {
                 const keys = Object.keys(parsed);
+                console.log('Object keys:', keys);
                 if (keys.length > 0) {
                     // Check if at least one key has the multi-query structure
                     const firstKey = keys[0];
+                    console.log('First key:', firstKey);
+                    console.log('First key value:', parsed[firstKey]);
                     if (parsed[firstKey] && typeof parsed[firstKey] === 'object' &&
                         'success' in parsed[firstKey] && 'data' in parsed[firstKey]) {
+                        console.log('✓ Is multi-query format, returning true');
                         return true;
                     }
                 }
             }
+            console.log('Not multi-query format, returning false');
             return false;
         } catch (e) {
+            console.error('Error parsing queryResult:', e);
             return false;
         }
     }
 
     parseMultiQueryResult(queryResult: string): any[] {
+        console.log('=== parseMultiQueryResult CALLED ===');
         if (!queryResult || queryResult.trim() === '') {
+            console.log('Empty queryResult, returning []');
             return [];
         }
 
         try {
             const parsed = JSON.parse(queryResult);
+            console.log('Parsed JSON in parseMultiQueryResult:', parsed);
             const results: any[] = [];
 
             // Each key is a query name, value is the result object
             for (const queryName of Object.keys(parsed)) {
+                console.log('Processing query:', queryName);
                 const queryData = parsed[queryName];
+                console.log('Query data:', queryData);
                 if (queryData && typeof queryData === 'object') {
-                    results.push({
+                    const resultObject = {
                         queryName: queryName,
                         success: queryData.success || false,
                         summary: queryData.summary || null,
@@ -578,10 +617,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                         columns: queryData.columns || [],
                         row_count: queryData.row_count || 0,
                         error: queryData.error || null
-                    });
+                    };
+                    console.log('Adding result object:', resultObject);
+                    results.push(resultObject);
                 }
             }
 
+            console.log('Final parsed results array:', results);
+            console.log('Results count:', results.length);
             return results;
         } catch (e) {
             console.error('Failed to parse multi-query result:', e);
