@@ -1,4 +1,6 @@
-![sql-chatbot-demo](doc/sql-chatbot-demo.mp4)
+## Demo
+
+https://github.com/user-attachments/assets/fe7f040d-f89b-4960-974c-faffb837d60b
 
 ---
 
@@ -71,8 +73,6 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 - **Capabilities:**
   - Fetches schema using `get_schema` tool
   - Generates sample questions relevant to the user's data
-  - Fetches schema using `get_schema` tool
-  - Generates sample questions relevant to the user's data
 
 
 ### 3️⃣ **SQL Agent** (Sequential Coordinator)
@@ -101,7 +101,6 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 ### 5️⃣ **SQL Validator & SQL Executor Agent**
 - **Responsibilities:**
   1. This agent validates SQL, executes it, and returns a user-friendly response.
-  2. Cross-checks against schema (received from previous agent)
   2. Cross-checks against schema (received from previous agent)
   3. Executes SQL using `execute_sql()` tool
   4. Generates post-query **Suggestions** (follow-up questions)

@@ -65,12 +65,6 @@ def parse_agent_response(response_text: str) -> dict:
     # Special handling for query_result to add debug logging
     query_result_raw = get_section_content("<<<QUERY_RESULT>>>")
     if query_result_raw:
-<<<<<<< HEAD
-=======
-        print(f"[DEBUG] Raw query_result length: {len(query_result_raw)}")
-        print(f"[DEBUG] First 200 chars: {query_result_raw[:200]}")
-        print(f"[DEBUG] Last 200 chars: {query_result_raw[-200:]}")
->>>>>>> d2c0a79b9d4b5ccb0d53cd2256c31890fe18cd38
         
         # Strip JavaScript-style comments (// ...) which are invalid in JSON
         # Some LLMs may add these despite instructions not to
@@ -86,20 +80,12 @@ def parse_agent_response(response_text: str) -> dict:
                 before_comment = line[:comment_idx]
                 quote_count = before_comment.count('"') - before_comment.count('\\"')
                 if quote_count % 2 == 0:  # Even number of quotes = not inside string
-<<<<<<< HEAD
-=======
-                    print(f"[DEBUG] Removing comment from line: {line.strip()}")
->>>>>>> d2c0a79b9d4b5ccb0d53cd2256c31890fe18cd38
                     line = line[:comment_idx].rstrip()
                     if not line.strip() or line.strip() == ',':
                         continue  # Skip empty lines or lines with just comma
             cleaned_lines.append(line)
         
         query_result_raw = '\n'.join(cleaned_lines)
-<<<<<<< HEAD
-=======
-        print(f"[DEBUG] After comment removal length: {len(query_result_raw)}")
->>>>>>> d2c0a79b9d4b5ccb0d53cd2256c31890fe18cd38
         
         # Try to validate it's valid JSON
         try:
