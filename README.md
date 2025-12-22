@@ -71,6 +71,8 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 - **Capabilities:**
   - Fetches schema using `get_schema` tool
   - Generates sample questions relevant to the user's data
+  - Fetches schema using `get_schema` tool
+  - Generates sample questions relevant to the user's data
 
 
 ### 3️⃣ **SQL Agent** (Sequential Coordinator)
@@ -99,6 +101,7 @@ It analyzes the user's intent and transfers to either the greeting agent or SQL 
 ### 5️⃣ **SQL Validator & SQL Executor Agent**
 - **Responsibilities:**
   1. This agent validates SQL, executes it, and returns a user-friendly response.
+  2. Cross-checks against schema (received from previous agent)
   2. Cross-checks against schema (received from previous agent)
   3. Executes SQL using `execute_sql()` tool
   4. Generates post-query **Suggestions** (follow-up questions)
@@ -217,6 +220,7 @@ pip install -r requirements.txt
 ### **Step 5: Set Up API Key**
 
 Create a `.env` file in the project root:
+
 
 ✅ Option 1: Google Gemini (Google ADK)
 ```env
