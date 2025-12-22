@@ -48,7 +48,7 @@ def execute_sql_query(query: str) -> str:
                 "columns": [],
             })
         
-        logger.info(f"Executing SQL query: {query}")
+        logger.info(f"Executing SQL query...")
         logger.debug(f"Available tables in database: {tables}")
         
         # Get database connection

@@ -1,3 +1,7 @@
+![sql-chatbot-demo](doc/sql-chatbot-demo.mp4)
+
+---
+
 # SQL ChatBot 🤖
 
 SQL ChatBot is an intelligent, **multi-agent GenAI application** built using **Google ADK (Agent Development Kit)**.  
@@ -21,7 +25,7 @@ The chatbot understands natural language queries, generates safe and accurate SQ
 
 ## 🏗️ System Architecture
 
-![Data Flow Diagram](doc/Sql-chatbot-architecture.png)
+![Sql-chatbot-architecture](doc/Sql-chatbot-architecture.png)
 
 ---
 
