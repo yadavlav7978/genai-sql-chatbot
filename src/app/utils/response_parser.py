@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 Response Parser Utility - Parses structured agent responses into clean dictionaries for the API.
 

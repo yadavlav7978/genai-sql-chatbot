@@ -1,16 +1,16 @@
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import json
 import sqlite3
 
 from src.app.configs.logger_config import get_logger
 from src.app.utils.database_manager import get_db_connection, get_all_table_names
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("MCPTool-Service-Execute-SQL")
 
 
-# =============================== MAIN FUNCTION ===============================
+# Execute SQL Function
 def execute_sql_query(query: str) -> str:
     """
     Execute a SQL query on data from the persistent database.

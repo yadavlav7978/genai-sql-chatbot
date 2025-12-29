@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 Logger Configuration - Sets up the application-wide logging configuration.
 
@@ -8,7 +7,7 @@ This module provides:
 - Rotating file handler for log management
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import logging
 import sys
 from pathlib import Path

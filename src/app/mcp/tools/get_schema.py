@@ -14,16 +14,16 @@ What this file does
 - Acts as a helper module for agents/tools — not an API route.
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import json
 
 from src.app.configs.logger_config import get_logger
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("MCPTool-Service-get-schema")
 
 
-# =============================== GET SCHEMA FUNCTION ===============================
+# GET SCHEMA FUNCTION 
 def get_schema_summary():
     """
     Retrieve schemas for all tables currently available in the database.

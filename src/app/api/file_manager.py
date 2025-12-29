@@ -14,7 +14,7 @@ Core responsibilities
 - Reconstruct registry and rebuild database on startup.
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from pathlib import Path
@@ -33,13 +33,13 @@ from src.app.utils.database_manager import (
     get_all_table_names
 )
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("File-Manager-Api-Service")
 
-# =============================== ROUTER ===============================
+# ROUTER
 router = APIRouter(prefix="/api", tags=["file-manager"])
 
-# =============================== DIRECTORIES ===============================
+# DIRECTORIES
 UPLOAD_DIR = Path("uploads")
 SCHEMA_DIR = Path("schemas")
 METADATA_DIR = Path("metadata")
@@ -52,10 +52,10 @@ logger.info(f"Upload folder is ready at this path: {UPLOAD_DIR.resolve()}")
 logger.info(f"Schema folder is ready at this path: {SCHEMA_DIR.resolve()}")
 logger.info(f"Metadata folder is ready at this path: {METADATA_DIR.resolve()}")
 
-# =============================== CONSTANTS ===============================
+# CONSTANTS
 MAX_FILES = 10  # Maximum number of files allowed
 
-# =============================== GLOBAL STATE - FILE REGISTRY ===============================
+# GLOBAL STATE - FILE REGISTRY
 FILE_REGISTRY: Dict[str, Dict] = {}
 
 # =============================== HELPER FUNCTIONS ===============================
@@ -145,7 +145,7 @@ def check_files_on_startup():
 
     logger.info(f"Startup completed with {len(FILE_REGISTRY)} file(s) in registry.")
 
-# =============================== 1. FILE UPLOAD ===============================
+# =============================== FILE UPLOAD ===============================
 @router.post("/upload-file")
 async def upload_file(file: UploadFile = File(...)):
     """Upload an Excel/CSV file → generate schema → load to DB → update registry."""
@@ -259,7 +259,7 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
 
-# =============================== 2. FILE STATUS ===============================
+# ===============================  FILE STATUS ===============================
 @router.get("/file-status")
 async def file_status():
     """Quick summary of uploaded files."""
@@ -296,7 +296,7 @@ async def file_status():
     }
 
 
-# =============================== 4. DELETE A SINGLE FILE ===============================
+# ===============================  DELETE A SINGLE FILE ===============================
 @router.delete("/file/{file_id}")
 async def delete_file(file_id: str):
     """Delete a file and clean DB, metadata, schema, registry."""
@@ -338,7 +338,7 @@ async def delete_file(file_id: str):
         "max_files": MAX_FILES
     }
 
-# =============================== 5. DELETE ALL FILES ===============================
+# =============================== DELETE ALL FILES ===============================
 @router.delete("/files/all")
 async def delete_all_files():
     """Delete all uploaded files and clear registry."""

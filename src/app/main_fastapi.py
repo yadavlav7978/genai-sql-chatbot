@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 Main Application Entry Point - Initializes the FastAPI application, configures middleware, includes routers, and handles startup/shutdown events.
 
@@ -10,7 +9,7 @@ This module provides:
 - Startup and shutdown event handlers
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import os
 from pathlib import Path
 from fastapi import FastAPI
@@ -34,7 +33,7 @@ logger = setup_logger("Main-Service")
 configure_api_key()
 
 
-# =============================== FASTAPI INIT ===============================
+# FASTAPI INIT
 logger.info("Initializing FastAPI application...")
 
 app = FastAPI(
@@ -44,8 +43,7 @@ app = FastAPI(
 )
 
 
-# =============================== CORS CONFIGURATION ===============================
-
+# CORS CONFIGURATION
 allowed_origins = ["http://localhost:4200", "http://localhost:3000"]
 
 app.add_middleware(
@@ -58,8 +56,7 @@ app.add_middleware(
 
 
 
-# =============================== ROUTER SETUP ===============================
-
+# ROUTER SETUP
 app.include_router(chat_router)
 app.include_router(file_manager_router)
 app.include_router(health_router)

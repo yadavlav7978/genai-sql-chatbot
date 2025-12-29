@@ -1,4 +1,4 @@
-# =============================== FILE PURPOSE ===============================
+
 """
 Health API Endpoint - Provides a simple health check endpoint for the API.
 
@@ -6,7 +6,7 @@ This module provides:
 - GET /api/health: Health check endpoint
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 from fastapi import APIRouter
 from src.app.configs.logger_config import get_logger
 

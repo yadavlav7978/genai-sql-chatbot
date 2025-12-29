@@ -24,7 +24,7 @@ What this file does
 """
 
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -32,7 +32,7 @@ from typing import Dict, List, Any, Optional
 
 from src.app.configs.logger_config import get_logger
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("Utils-Service-Excel-Schema")
 
 

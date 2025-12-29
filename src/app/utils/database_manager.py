@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 Database Manager - Centralized SQLite database management for multi-table support.
 
@@ -10,7 +9,7 @@ This module provides:
 - Table listing and management
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 import sqlite3
 import hashlib
 from pathlib import Path
@@ -20,10 +19,10 @@ import pandas as pd
 from src.app.configs.logger_config import get_logger
 from src.app.utils.schema_generator import read_excel_file
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("Utils-Service-Database-Manager")
 
-# =============================== CONSTANTS ===============================
+# CONSTANTS
 DB_DIR = Path("database")
 DB_FILE = DB_DIR / "chatbot.db"
 

@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 API Key Configuration - Manages the loading and configuration of external API keys (e.g., Azure OpenAI).
 
@@ -8,7 +7,7 @@ This module provides:
 - Validation of required API keys
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 from dotenv import load_dotenv
 import os
 from src.app.configs.logger_config import setup_logger
@@ -22,7 +21,7 @@ logger = setup_logger("API-Key-Service" )
 
 
 
-# =============================== API KEY CONFIG ===============================
+# API KEY CONFIG
 def configure_api_key():
     """Configure Google API key from environment variables."""
     logger.info("Configuring Azure OpenAI credentials...")

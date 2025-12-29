@@ -17,7 +17,7 @@ What this file does
 - Allows deleting a session safely (idempotent).
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import JSONResponse
 from typing import Optional
@@ -28,10 +28,10 @@ from src.app.services import session_service, runner
 from google.genai import types
 import asyncio
 
-# =============================== LOGGER ===============================
+# LOGGER
 logger = get_logger("Chat-Api-Service")
 
-# =============================== ROUTER ===============================
+# ROUTER
 router = APIRouter(prefix="/api", tags=["chat"])
 
 

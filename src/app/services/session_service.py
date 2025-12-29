@@ -1,4 +1,3 @@
-# =============================== FILE PURPOSE ===============================
 """
 Session Service - Manages chat sessions using an in-memory session store.
 
@@ -7,7 +6,7 @@ This module provides:
 - Session management for the chatbot application
 """
 
-# =============================== IMPORTS ===============================
+# IMPORTS
 from google.adk.sessions import InMemorySessionService
 from src.app.configs.logger_config import get_logger
 
