@@ -22,12 +22,15 @@ from src.app.api import (
 )
 from src.app.configs.logger_config import setup_logger
 from src.app.configs.apiKey_config import configure_api_key
+from src.app.configs.langfuse_config import configure_langfuse
 from src.app.api import file_manager
 
 # Setup logger
 logger = setup_logger("Main-Service")
 
 
+# Initialize Langfuse observability (must be done before agents are created)
+configure_langfuse()
 
 # Initialize API key configuration
 configure_api_key()
@@ -83,18 +86,25 @@ async def startup_event():
     # Check for existing files on startup
     file_manager.check_files_on_startup()
 
+    # Verify Langfuse connection on startup
+    langfuse_status = configure_langfuse()
+    
     # Verify API key on startup
-    if configure_api_key():
-        logger.info("🎉 Application started successfully with valid API configuration.")
+    api_key_status = configure_api_key()
+    
+    if langfuse_status and api_key_status:
+        logger.info("Application started successfully with Langfuse observability and valid API configuration.")
+    elif api_key_status:
+        logger.warning("Application started with API configuration, but Langfuse observability failed.")
     else:
-        logger.error("⚠️ Application started, but API key configuration failed.")
+        logger.error("Application started, but API key configuration failed.")
 
 
 # =============================== SHUTDOWN EVENT ===============================
 @app.on_event("shutdown")
 async def shutdown_event():
     """Application shutdown event."""
-    logger.info("🛑 Shutting down SQL ChatBot API server...")
+    logger.info("Shutting down SQL ChatBot API server...")
 
 
 # =============================== ROOT ENDPOINT ===============================

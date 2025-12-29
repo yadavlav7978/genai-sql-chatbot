@@ -10,3 +10,5 @@ annotated-types
 litellm
 fastmcp
 mcp
+langfuse
+openinference-instrumentation-google-adk

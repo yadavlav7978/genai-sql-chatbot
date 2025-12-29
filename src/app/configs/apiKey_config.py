@@ -31,18 +31,18 @@ def configure_api_key():
     api_version = os.getenv("API_VERSION")
 
     if not api_key:
-        logger.error("❌ API_KEY missing in environment variables.")
+        logger.error("API_KEY missing in environment variables.")
         return False
     if not api_endpoint:
-        logger.error("❌ API_ENDPOINT missing in environment variables.")
+        logger.error("API_ENDPOINT missing in environment variables.")
         return False
     if not api_version:
-        logger.error("❌ API_VERSION missing in environment variables.")
+        logger.error("API_VERSION missing in environment variables.")
         return False
 
     os.environ["AZURE_API_KEY"] = api_key
     os.environ["AZURE_API_BASE"] = api_endpoint
     os.environ["AZURE_API_VERSION"] = api_version
 
-    logger.info("✅ Azure OpenAI credentials loaded successfully.")
+    logger.info("Azure OpenAI credentials loaded successfully.")
     return True
