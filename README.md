@@ -33,29 +33,21 @@ The chatbot understands natural language queries, generates safe and accurate SQ
 
 ## ✨ Key Features of SQL ChatBot
 
-#### 1️⃣ **Ask questions in plain English**
-- No need to write complex SQL queries. Just ask questions in natural language and get clear, human-readable answers.
+- **Ask questions in plain English**: No need to write complex SQL queries. Just ask questions in natural language and get clear, human-readable answers.
 
-#### 2️⃣ **Query multiple files at once**
-- Ask questions across multiple uploaded Excel or CSV files without writing SQL.
+- **Query multiple files at once**: Ask questions across multiple uploaded Excel or CSV files without writing SQL.
 
-#### 3️⃣ **Supports complex multi-part questions**
-- The chatbot can process complex queries that request different types of information in one question (not limited to single or multiple people).
+- **Supports complex multi-part questions**: The chatbot can process complex queries that request different types of information in one question (not limited to single or multiple people).
 
-#### 4️⃣ **Read-only and safe by design**
-- Only SELECT (read) operations are allowed. Your data is always protected from updates, deletes, or inserts. No write operations are allowed.
+- **Read-only and safe by design**: Only SELECT (read) operations are allowed. Your data is always protected from updates, deletes, or inserts. No write operations are allowed.
 
-#### 5️⃣ **Smart follow-up question suggestions and starter questions for new users**
-- The chatbot suggests relevant follow-up questions after each response and also provides starter questions when a chat begins or when a general query is asked,helping users explore data easily without getting stuck.
+- **Smart follow-up question suggestions and starter questions for new users**: The chatbot suggests relevant follow-up questions after each response and also provides starter questions when a chat begins or when a general query is asked,helping users explore data easily without getting stuck.
 
-#### 6️⃣ **Agent visibility in the UI**
-- The chat interface clearly shows **which AI agent is selected by the orchestrator** for each response.
+- **Agent visibility in the UI**: The chat interface clearly shows **which AI agent is selected by the orchestrator** for each response.
 
-#### 7️⃣ **View generated database schema**
-- With the **"Show Schema"** button, users can see all schemas generated from the uploaded files.
+- **View generated database schema**: With the **"Show Schema"** button, users can see all schemas generated from the uploaded files.
 
-#### 8️⃣ **MCP (Model Context Protocol) integration**
-- MCP support allows the chatbot to **securely expose tools, schemas, and resources**, making it more extensible and powerful.
+- **MCP (Model Context Protocol) integration**: MCP support allows the chatbot to **securely expose tools, schemas, and resources**, making it more extensible and powerful.
 
 ---
 
@@ -130,16 +122,12 @@ This application uses the **Model Context Protocol (MCP)** to standardize how AI
 
 Understanding how your data moves from upload to query execution:
 
-### **1. File Upload**
-🟢 **Step 1: Uploading the File**
+### **Step 1: Uploading the File**
 - You upload an Excel or CSV file using the web interface.
 - The system accepts only valid file types: `.csv`, `.xlsx`, `.xls`.
 - Duplicate files are automatically detected and avoided.
 
-👉 **Goal:** Safely accept your data.
-
-### **2. Storage**
-🟢 **Step 2: Saving the File**
+### **Step 2: Saving the File**
 - The uploaded file is stored securely in the `uploads/` folder.
 - Each file is renamed using a unique ID (UUID) to avoid conflicts.
 - File details like:
@@ -148,35 +136,24 @@ Understanding how your data moves from upload to query execution:
   - File hash
   are saved separately in the `metadata/` folder.
 
-👉 **Goal:** Keep files organized and traceable.
-
-### **3. Schema Extraction**
-🟢 **Step 3: Creating the Schema**
+### **Step 3: Creating the Schema**
 - The system reads the uploaded file to understand:
   - Column names
   - Data types (text, number, date, etc.)
 - A schema (structure of the data) is generated in JSON format.
 - This schema is saved in the `schemas/` folder.
 
-👉 **Goal:** Help the AI understand your data correctly.
-
-### **4. Database Ingestion**
-🟢 **Step 4: Storing Data in the Database**
+### **Step 4: Storing Data in the Database**
 - The file’s data is loaded using Pandas.
 - All rows are inserted into a persistent SQLite database (`database/chatbot.db`).
 - This database is optimized for fast and reliable SQL queries.
 
-👉 **Goal:** Make your data easy and fast to query.
-
-### **5. Query Execution**
-🟢 **Step 5: Asking Questions**
+### **Step 5: Asking Questions**
 - When you ask a question in natural language:
   - The AI uses the stored schema to understand your data.
   - A safe SQL query is generated.
   - The query is executed on the SQLite database.
   - Results are returned to you in a clear and user-friendly format.
-
-👉 **Goal:** Get instant answers from your uploaded data.
 
 ---
 
